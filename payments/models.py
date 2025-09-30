@@ -48,7 +48,7 @@ class PaymentTransaction(models.Model):
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=3, default='USD')
-    purpose = models.CharField(max_length=20, choices=PURPOSES, default='assessment')
+    purpose = models.CharField(max_length=200, choices=PURPOSES, default='assessment')
     
     # Status tracking
     status = models.CharField(max_length=20, choices=PAYMENT_STATUS, default='pending')
