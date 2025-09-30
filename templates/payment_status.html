@@ -1,0 +1,426 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payment Status - Bematore{% endblock %}
+
+{% block page_header %}
+<div class="page-title">Payment Status</div>
+<div class="page-subtitle">Transaction #{{ transaction.transaction_id }}</div>
+{% endblock %}
+
+{% block content %}
+<!-- Payment Summary -->
+<div class="payment-summary">
+    <div class="summary-header">
+        <h3 class="summary-title">
+            <svg class="summary-icon" viewBox="0 0 24 24">
+                <path d="M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z"/>
+            </svg>
+            Transaction Details
+        </h3>
+        <div class="status-indicator status-{{ transaction.status }}">
+            {% if transaction.status == 'completed' %}
+                <svg viewBox="0 0 24 24" width="12" height="12">
+                    <path d="M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z"/>
+                </svg>
+                Completed
+            {% elif transaction.status == 'pending' %}
+                <svg viewBox="0 0 24 24" width="12" height="12">
+                    <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12H16A4,4 0 0,0 12,8V6Z"/>
+                </svg>
+                Processing
+            {% elif transaction.status == 'failed' %}
+                <svg viewBox="0 0 24 24" width="12" height="12">
+                    <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
+                </svg>
+                Failed
+            {% else %}
+                <svg viewBox="0 0 24 24" width="12" height="12">
+                    <path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
+                </svg>
+                {{ transaction.status|title }}
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="summary-details">
+        <div class="summary-row">
+            <span class="summary-label">Amount</span>
+            <span class="summary-value">
+                {% if transaction.metadata.display_currency and transaction.metadata.display_amount %}
+                    {{ transaction.metadata.display_currency }} {{ transaction.metadata.display_amount }}
+                    {% if transaction.currency != transaction.metadata.display_currency %}
+                        <small>({{ transaction.currency }} {{ transaction.amount }})</small>
+                    {% endif %}
+                {% else %}
+                    {{ transaction.currency }} {{ transaction.amount }}
+                {% endif %}
+            </span>
+        </div>
+        <div class="summary-row">
+            <span class="summary-label">Payment Method</span>
+            <span class="summary-value">
+                {% if transaction.payment_method == 'mpesa' %}
+                    <img src="{% static 'images/mpesa-logo.svg' %}" width="16" height="16" alt="M-Pesa"> M-Pesa
+                {% elif transaction.payment_method == 'flutterwave' %}
+                    <img src="{% static 'images/card-logo.svg' %}" width="16" height="16" alt="Card"> Card Payment
+                {% else %}
+                    {{ transaction.payment_method|title }}
+                {% endif %}
+            </span>
+        </div>
+        {% if transaction.phone_number %}
+        <div class="summary-row">
+            <span class="summary-label">Phone Number</span>
+            <span class="summary-value">{{ transaction.phone_number }}</span>
+        </div>
+        {% endif %}
+        {% if transaction.mpesa_receipt or transaction.flutterwave_flw_ref %}
+        <div class="summary-row">
+            <span class="summary-label">Reference</span>
+            <span class="summary-value">{{ transaction.mpesa_receipt|default:transaction.flutterwave_flw_ref }}</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Status Content -->
+<div class="status-content">
+    {% if transaction.status == 'pending' %}
+        
+        {% if transaction.payment_method == 'mpesa' %}
+            <div class="alert alert-info">
+                <div class="alert-content">
+                    <div class="alert-title">M-Pesa Payment Request Sent</div>
+                    <p>A payment request has been sent to your phone <strong>{{ transaction.phone_number }}</strong>.</p>
+                    <p>Please check your phone and complete the payment using your M-Pesa PIN.</p>
+                    
+                    <div class="payment-steps">
+                        <h4>Next Steps:</h4>
+                        <ol>
+                            <li>Check your phone for the M-Pesa payment request</li>
+                            <li>Enter your M-Pesa PIN to authorize the payment</li>
+                            <li>Wait for the SMS confirmation</li>
+                            <li>Your payment will be processed automatically</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pulse Animation -->
+            <div class="pulse-container">
+                <div class="pulse-ring">
+                    <svg class="pulse-icon" viewBox="0 0 24 24">
+                        <path d="M6.62,10.79C8.06,13.62 10.38,15.94 13.21,17.38L15.41,15.18C15.69,14.9 16.08,14.82 16.43,14.93C17.55,15.3 18.75,15.5 20,15.5A1,1 0 0,1 21,16.5V20A1,1 0 0,1 20,21A17,17 0 0,1 3,4A1,1 0 0,1 4,3H7.5A1,1 0 0,1 8.5,4C8.5,5.25 8.7,6.45 9.07,7.57C9.18,7.92 9.1,8.31 8.82,8.59L6.62,10.79Z"/>
+                    </svg>
+                </div>
+            </div>
+            
+            <button class="btn btn-secondary" id="checkStatusBtn" onclick="checkPaymentStatus()">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"/>
+                </svg>
+                Check Payment Status
+            </button>
+            
+        {% elif transaction.payment_method == 'flutterwave' %}
+            <div class="alert alert-info">
+                <div class="alert-content">
+                    <div class="alert-title">Redirecting to Payment Gateway</div>
+                    <p>You will be redirected to complete your payment securely with our payment partner.</p>
+                </div>
+            </div>
+            
+            <div class="pulse-container">
+                <div class="pulse-ring">
+                    <svg class="pulse-icon" viewBox="0 0 24 24">
+                        <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12H16A4,4 0 0,0 12,8V6Z"/>
+                    </svg>
+                </div>
+            </div>
+            
+            {% if flutterwave_link %}
+            <script>
+                setTimeout(() => {
+                    window.location.href = "{{ flutterwave_link }}";
+                }, 3000);
+            </script>
+            {% endif %}
+        {% endif %}
+        
+    {% elif transaction.status == 'completed' %}
+        
+        <div class="alert alert-success">
+            <div class="alert-content">
+                <div class="alert-title">Payment Successful!</div>
+                <p>Your payment has been processed successfully. Thank you for choosing Bematore for your mental health journey.</p>
+                
+                {% if transaction.mpesa_receipt %}
+                    <div class="receipt-info">
+                        <strong>M-Pesa Receipt:</strong> {{ transaction.mpesa_receipt }}
+                    </div>
+                {% endif %}
+                
+                {% if transaction.flutterwave_flw_ref %}
+                    <div class="receipt-info">
+                        <strong>Transaction Reference:</strong> {{ transaction.flutterwave_flw_ref }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="success-animation">
+            <svg class="success-icon" viewBox="0 0 24 24" width="64" height="64">
+                <circle cx="12" cy="12" r="10" fill="#4CAF50"/>
+                <path d="M9,16.17L4.83,12L3.41,13.41L9,19L21,7L19.59,5.59L9,16.17Z" fill="white"/>
+            </svg>
+        </div>
+        
+        <button class="btn btn-success" onclick="returnToApp()">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+                <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/>
+            </svg>
+            Return to Bematore App
+        </button>
+        
+    {% elif transaction.status == 'failed' %}
+        
+        <div class="alert alert-error">
+            <div class="alert-content">
+                <div class="alert-title">Payment Failed</div>
+                <p>Unfortunately, your payment could not be processed at this time.</p>
+                
+                {% if transaction.failure_reason %}
+                    <div class="error-reason">
+                        <strong>Reason:</strong> {{ transaction.failure_reason }}
+                    </div>
+                {% endif %}
+                
+                <div class="error-help">
+                    <p>You can try again or contact our support team if the problem persists.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <a href="{% url 'payments:payment_form' %}?transaction_id={{ transaction.transaction_id }}" 
+               class="btn btn-primary">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"/>
+                </svg>
+                Try Again
+            </a>
+            
+            <button class="btn btn-secondary" onclick="returnToApp()">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/>
+                </svg>
+                Return to App
+            </button>
+        </div>
+        
+    {% elif transaction.status == 'cancelled' %}
+        
+        <div class="alert alert-warning">
+            <div class="alert-content">
+                <div class="alert-title">Payment Cancelled</div>
+                <p>The payment was cancelled. You can try again or return to the app.</p>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <a href="{% url 'payments:payment_form' %}?transaction_id={{ transaction.transaction_id }}" 
+               class="btn btn-primary">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"/>
+                </svg>
+                Try Again
+            </a>
+            
+            <button class="btn btn-secondary" onclick="returnToApp()">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/>
+                </svg>
+                Return to App
+            </button>
+        </div>
+        
+    {% endif %}
+</div>
+
+<!-- Support Info -->
+<div class="support-info">
+    <p>Need help? Contact our support team:</p>
+    <div class="support-contacts">
+        <a href="mailto:support@bematore.com" class="support-link">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+                <path d="M20,8L12,13L4,8V6L12,11L20,6M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.11,4 20,4Z"/>
+            </svg>
+            support@bematore.com
+        </a>
+        <a href="tel:+254700123456" class="support-link">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+                <path d="M6.62,10.79C8.06,13.62 10.38,15.94 13.21,17.38L15.41,15.18C15.69,14.9 16.08,14.82 16.43,14.93C17.55,15.3 18.75,15.5 20,15.5A1,1 0 0,1 21,16.5V20A1,1 0 0,1 20,21A17,17 0 0,1 3,4A1,1 0 0,1 4,3H7.5A1,1 0 0,1 8.5,4C8.5,5.25 8.7,6.45 9.07,7.57C9.18,7.92 9.1,8.31 8.82,8.59L6.62,10.79Z"/>
+            </svg>
+            +254 700 123 456
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.status-content {
+    margin-top: 24px;
+}
+
+.payment-steps h4 {
+    margin: 16px 0 8px 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.payment-steps ol {
+    margin: 0 0 0 20px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.payment-steps li {
+    margin-bottom: 4px;
+}
+
+.success-animation {
+    text-align: center;
+    margin: 32px 0;
+}
+
+.success-icon {
+    animation: scaleIn 0.5s ease-out;
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.action-buttons {
+    display: grid;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.action-buttons .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.receipt-info, .error-reason, .error-help {
+    margin-top: 12px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.support-info {
+    text-align: center;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-light);
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.support-contacts {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.support-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--primary-blue);
+    text-decoration: none;
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 16px;
+    background: var(--calm-pulse-blue);
+    transition: all 0.2s ease;
+}
+
+.support-link:hover {
+    background: var(--primary-blue);
+    color: white;
+}
+
+@media (max-width: 480px) {
+    .support-contacts {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-refresh for pending payments
+{% if transaction.status == 'pending' %}
+    let refreshCount = 0;
+    const maxRefreshes = 20; // Stop after 10 minutes
+    
+    const autoRefresh = setInterval(() => {
+        refreshCount++;
+        if (refreshCount >= maxRefreshes) {
+            clearInterval(autoRefresh);
+            return;
+        }
+        
+        if (!document.hidden) {
+            // Only refresh if page is visible
+            fetch(window.location.href, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.text();
+                }
+            })
+            .then(html => {
+                // Check if status has changed by looking for specific elements
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newStatus = doc.querySelector('.status-indicator');
+                
+                if (newStatus && !newStatus.classList.contains('status-pending')) {
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                console.log('Auto-refresh error:', error);
+            });
+        }
+    }, 30000); // Check every 30 seconds
+    
+    // Clear interval when page becomes hidden
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden && refreshCount > 5) {
+            clearInterval(autoRefresh);
+        }
+    });
+{% endif %}
+</script>
+{% endblock %}

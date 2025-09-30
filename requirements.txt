@@ -1,0 +1,42 @@
+# Django Framework
+Django>=4.2.0,<4.3.0
+djangorestframework>=3.14.0
+django-cors-headers>=4.0.0
+django-environ>=0.10.0
+
+# Firebase Integration
+firebase-admin>=6.2.0
+google-cloud-firestore>=2.11.0
+PyJWT>=2.8.0
+cryptography>=41.0.0
+
+# HTTP Requests
+requests>=2.31.0
+
+# Database - PyMySQL client for cPanel deployment
+PyMySQL>=1.1.0
+
+# Payment Processing APIs
+# (M-Pesa and Flutterwave use HTTP requests)
+
+# Environment & Configuration
+python-decouple>=3.8
+python-dotenv>=1.0.0
+
+# Utilities
+python-dateutil>=2.8.0
+
+# Security
+pycryptodome>=3.18.0
+
+# Development
+django-debug-toolbar>=4.1.0
+pytest-django>=4.5.0
+black>=23.7.0
+
+# Production
+gunicorn>=21.2.0
+whitenoise>=6.5.0
+
+# API Documentation
+drf-yasg>=1.21.0

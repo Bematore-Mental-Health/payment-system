@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_tags %}
+
+{% block title %}Select Payment Method - Bematore{% endblock %}
+
+{% block page_header %}
+<div class="page-title">Choose Payment Method</div>
+<div class="page-subtitle">Secure payment for your mental health journey</div>
+{% endblock %}
+
+{% block content %}
+<!-- Payment Summary -->
+<div class="payment-summary">
+    <div class="summary-header">
+        <h3 class="summary-title">
+            <svg class="summary-icon" viewBox="0 0 24 24">
+                <path d="M17,18C17,18.85 16.15,19.5 15,19.5C13.85,19.5 13,18.85 13,18C13,17.15 13.85,16.5 15,16.5C16.15,16.5 17,17.15 17,18M1,2V4H3L6.6,11.59L5.24,14.04C5.09,14.32 5,14.65 5,15A2,2 0 0,0 7,17H19V15H7.42A0.25,0.25 0 0,1 7.17,14.75C7.17,14.7 7.18,14.66 7.2,14.63L8.1,13H15.55C16.3,13 16.96,12.58 17.3,11.97L20.88,5H5.21L4.27,3H1M7,18C7,18.85 6.15,19.5 5,19.5C3.85,19.5 3,18.85 3,18C3,17.15 3.85,16.5 5,16.5C6.15,16.5 7,17.15 7,18Z"/>
+            </svg>
+            Payment Summary
+        </h3>
+    </div>
+    
+    <div class="summary-details">
+        <div class="summary-row">
+            <span class="summary-label">Service</span>
+            <span class="summary-value">{{ purpose|default:"Mental Health Service" }}</span>
+        </div>
+        <div class="summary-row">
+            <span class="summary-label">Amount</span>
+            <span class="summary-value">{{ amount|format_currency:currency }}</span>
+        </div>
+        <div class="summary-total">
+            <div class="summary-row">
+                <span class="summary-label">Total</span>
+                <span class="summary-value">{{ amount|format_currency:currency }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alerts -->
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            <div class="alert-content">
+                <div class="alert-title">
+                    {% if message.tags == 'error' %}Error{% elif message.tags == 'success' %}Success{% elif message.tags == 'warning' %}Warning{% else %}Information{% endif %}
+                </div>
+                {{ message }}
+            </div>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<!-- App Store Compliance Notice -->
+{% if is_mobile_app %}
+<div class="compliance-notice {% if is_ios %}apple-notice{% else %}android-notice{% endif %}">
+    <div class="notice-icon">
+        <svg viewBox="0 0 24 24" width="20" height="20">
+            <path d="M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z" fill="currentColor"/>
+        </svg>
+    </div>
+    <div class="notice-content">
+        <div class="notice-title">External Payment Notice</div>
+        <div class="notice-text">
+            {% if is_ios %}
+            You are being redirected to an external payment system. This payment is processed outside of the app and may have different terms, privacy policies, and user protections than in-app purchases.
+            {% else %}
+            This payment is processed through our secure external payment system to ensure the best rates and payment options for your mental health services.
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Browser Options -->
+{% if is_mobile_app %}
+<div class="browser-options">
+    <div class="browser-option">
+        <button type="button" class="btn btn-outline" id="openInBrowserBtn">
+            <svg viewBox="0 0 24 24" width="16" height="16" style="margin-right: 8px;">
+                <path d="M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z"/>
+            </svg>
+            Open in Browser
+        </button>
+        <small class="browser-help">Having trouble? Open this payment page in your default browser for better compatibility.</small>
+    </div>
+</div>
+{% endif %}
+
+<!-- Payment Form -->
+<form method="post" id="paymentForm" novalidate>
+    {% csrf_token %}
+    
+    <!-- Hidden Fields -->
+    <input type="hidden" name="transaction_id" value="{{ transaction_id }}">
+    <input type="hidden" name="user_uid" value="{{ user_uid }}">
+    <input type="hidden" name="email" value="{{ email }}">
+    <input type="hidden" name="name" value="{{ name }}">
+    <input type="hidden" name="amount" value="{{ amount }}">
+    <input type="hidden" name="currency" value="{{ currency }}">
+    <input type="hidden" name="purpose" value="{{ purpose }}">
+    <input type="hidden" name="payment_method" id="paymentMethod" required>
+    
+    <!-- Payment Methods Section -->
+    <div class="form-section">
+        <h2 class="section-title">
+            <svg viewBox="0 0 24 24" width="20" height="20">
+                <path d="M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.11,4 20,4M20,18H4V8H20V18Z"/>
+            </svg>
+            Select Payment Method
+        </h2>
+        
+        <div class="payment-methods">
+            <!-- M-Pesa Payment -->
+            <div class="payment-method" data-method="mpesa" tabindex="0" role="button" aria-label="Pay with M-Pesa">
+                <img class="payment-logo" src="{% static 'images/mpesa-logo.svg' %}" alt="M-Pesa">
+                <div class="payment-info">
+                    <div class="payment-name">M-Pesa</div>
+                    <div class="payment-description">Mobile Money • Instant • Kenya</div>
+                </div>
+                <div class="payment-badge">Popular</div>
+            </div>
+            
+            <!-- Card Payment -->
+            <div class="payment-method" data-method="flutterwave" tabindex="0" role="button" aria-label="Pay with Card">
+                <img class="payment-logo" src="{% static 'images/card-logo.svg' %}" alt="Card Payment">
+                <div class="payment-info">
+                    <div class="payment-name">Card Payment</div>
+                    <div class="payment-description">Visa • Mastercard • Bank Transfer</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- M-Pesa Fields -->
+    <div id="mpesaFields" class="payment-fields">
+        <div class="form-group">
+            <label class="form-label" for="phoneNumber">
+                <svg viewBox="0 0 24 24" width="16" height="16" style="margin-right: 8px;">
+                    <path d="M6.62,10.79C8.06,13.62 10.38,15.94 13.21,17.38L15.41,15.18C15.69,14.9 16.08,14.82 16.43,14.93C17.55,15.3 18.75,15.5 20,15.5A1,1 0 0,1 21,16.5V20A1,1 0 0,1 20,21A17,17 0 0,1 3,4A1,1 0 0,1 4,3H7.5A1,1 0 0,1 8.5,4C8.5,5.25 8.7,6.45 9.07,7.57C9.18,7.92 9.1,8.31 8.82,8.59L6.62,10.79Z"/>
+                </svg>
+                M-Pesa Phone Number
+            </label>
+            <input 
+                type="tel" 
+                class="form-control" 
+                id="phoneNumber" 
+                name="phone_number" 
+                placeholder="0712 345 678 or 254 712 345 678"
+                maxlength="15"
+                aria-describedby="phoneHelp"
+                data-tooltip="Enter your M-Pesa registered phone number"
+            >
+            <div class="form-help" id="phoneHelp">
+                <svg viewBox="0 0 24 24" width="12" height="12">
+                    <path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
+                </svg>
+                Enter your M-Pesa registered number (e.g., 254712345678)
+            </div>
+        </div>
+        
+        <div class="alert alert-info">
+            <div class="alert-content">
+                <div class="alert-title">M-Pesa Payment: {{ mpesa_amount|format_currency:"KES" }}</div>
+                <ol class="mpesa-instructions">
+                    <li>You'll receive an M-Pesa payment request on your phone</li>
+                    <li>Enter your M-Pesa PIN to authorize the payment</li>
+                    <li>You'll get an SMS confirmation with receipt number</li>
+                    <li>Payment will be processed instantly</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Flutterwave Fields -->
+    <div id="flutterwaveFields" class="payment-fields">
+        <div class="alert alert-info">
+            <div class="alert-content">
+                <div class="alert-title">Secure Card Payment</div>
+                <p>You'll be redirected to our secure payment partner to complete your card payment. We accept:</p>
+                <div style="margin-top: 12px; display: flex; gap: 8px; align-items: center;">
+                    <span style="font-size: 12px; background: #f0f0f0; padding: 4px 8px; border-radius: 4px;">VISA</span>
+                    <span style="font-size: 12px; background: #f0f0f0; padding: 4px 8px; border-radius: 4px;">Mastercard</span>
+                    <span style="font-size: 12px; background: #f0f0f0; padding: 4px 8px; border-radius: 4px;">Bank Transfer</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Submit Button -->
+    <button type="submit" class="btn btn-primary" id="payButton" disabled>
+        <span class="loading-spinner" id="loadingSpinner"></span>
+        <span id="buttonText">Select Payment Method</span>
+        <svg viewBox="0 0 24 24" width="20" height="20" style="margin-left: 8px;">
+            <path d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z"/>
+        </svg>
+    </button>
+</form>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.logo-icon {
+    margin-bottom: 12px;
+}
+
+.payment-fields {
+    display: none;
+    margin-top: 24px;
+}
+
+.payment-fields.show {
+    display: block;
+}
+
+.loading-spinner {
+    display: none;
+}
+
+ol {
+    text-align: left;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>{% block title %}Bematore Payments{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{% static 'images/bematore-logo.svg' %}">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'css/payment-styles.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="app-container" id="app">
+        <div class="payment-wrapper">
+            <div class="payment-card">
+                <!-- Header -->
+                <div class="payment-header">
+                    <div class="bematore-logo">
+                        <div class="logo-icon">
+                            <img src="{% static 'images/bematore-logo.svg' %}" alt="Bematore" width="48" height="48">
+                        </div>
+                        <h1>Bematore</h1>
+                        <p>Mental Health & Wellness</p>
+                    </div>
+                    
+                    {% block page_header %}{% endblock %}
+                </div>
+                
+                <!-- Main Content -->
+                <div class="payment-content">
+                    {% block content %}{% endblock %}
+                </div>
+                
+                <!-- Footer -->
+                <div class="payment-footer">
+                    <div class="security-info">
+                        <svg class="security-icon" viewBox="0 0 24 24">
+                            <path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,7C13.4,7 14.8,8.6 14.8,10V11H16V18H8V11H9.2V10C9.2,8.6 10.6,7 12,7M12,8.2C11.2,8.2 10.4,8.7 10.4,10V11H13.6V10C13.6,8.7 12.8,8.2 12,8.2Z"/>
+                        </svg>
+                        <span>256-bit SSL Encryption</span>
+                    </div>
+                    <p class="copyright">&copy; 2025 Bematore. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript -->
+    <script src="{% static 'js/payment-system.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+    
+    <!-- Template Data -->
+    <script>
+        window.appData = {
+            transactionId: '{{ transaction.transaction_id|default:"" }}',
+            paymentStatus: '{{ transaction.status|default:"" }}',
+            userToken: '{{ user_token|default:"" }}',
+            csrfToken: '{{ csrf_token }}'
+        };
+    </script>
+</body>
+</html>
