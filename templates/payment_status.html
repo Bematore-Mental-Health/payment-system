@@ -423,39 +423,55 @@ function checkPaymentStatus() {
 
 // Return to app function
 function returnToApp() {
-    // Try to return to the Flutter app
+    // Try Flutter WebView first
     if (window.flutter_inappwebview) {
-        // Flutter InAppWebView
-        window.flutter_inappwebview.callHandler('payment_completed', {
-            transactionId: '{{ transaction.transaction_id }}',
-            status: '{{ transaction.status }}',
-            amount: '{{ transaction.amount }}',
-            currency: '{{ transaction.currency }}'
-        });
-    } else if (window.ReactNativeWebView) {
-        // React Native WebView
-        window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'payment_completed',
-            transactionId: '{{ transaction.transaction_id }}',
-            status: '{{ transaction.status }}'
-        }));
-    } else if (window.Android) {
-        // Android WebView
-        window.Android.paymentCompleted('{{ transaction.transaction_id }}', '{{ transaction.status }}');
-    } else if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.paymentCompleted) {
-        // iOS WKWebView
-        window.webkit.messageHandlers.paymentCompleted.postMessage({
-            transactionId: '{{ transaction.transaction_id }}',
-            status: '{{ transaction.status }}'
-        });
+        // Flutter InAppWebView - this is the correct approach
+        try {
+            window.flutter_inappwebview.callHandler('paymentResult', {
+                status: 'success',
+                transactionId: '{{ transaction.transaction_id }}',
+                amount: '{{ transaction.amount }}',
+                currency: '{{ transaction.currency }}',
+                action: 'return_to_app'
+            });
+            return;
+        } catch (e) {
+            console.log('Flutter handler failed:', e);
+        }
+    }
+    
+    // Try posting message to parent window (WebView)
+    try {
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+                type: 'payment_completed',
+                status: '{{ transaction.status }}',
+                transactionId: '{{ transaction.transaction_id }}',
+                amount: '{{ transaction.amount }}',
+                currency: '{{ transaction.currency }}'
+            }, '*');
+            return;
+        }
+    } catch (e) {
+        console.log('PostMessage failed:', e);
+    }
+    
+    // Try to close the window/WebView
+    try {
+        if (window.close) {
+            window.close();
+            return;
+        }
+    } catch (e) {
+        console.log('Close failed:', e);
+    }
+    
+    // Final fallback - navigate back
+    if (history.length > 1) {
+        history.back();
     } else {
-        // Fallback - try custom URL scheme
-        window.location.href = 'bematore://payment/completed?transaction_id={{ transaction.transaction_id }}&status={{ transaction.status }}';
-        
-        // If custom URL scheme fails, show message
-        setTimeout(() => {
-            alert('Please return to the Bematore app to continue.');
-        }, 1000);
+        // Show user message
+        alert('Payment completed successfully. Please return to the Bematore app.');
     }
 }
 
