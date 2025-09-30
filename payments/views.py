@@ -16,6 +16,7 @@ from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.utils.decorators import method_decorator
+from django.utils import timezone
 from django.views import View
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -88,6 +89,25 @@ class PaymentFormView(View):
                 display_currency = currency
                 storage_amount = currency_service.convert_to_usd(float(amount), currency)
         
+        # Get additional data from URL parameters if available
+        phone_number = request.GET.get('phone_number', '')
+        assessment_type = request.GET.get('assessment_type', '')
+        assessment_score = request.GET.get('assessment_score', '')
+        
+        # Fetch Firebase user data to enhance the transaction
+        firebase_user_data = None
+        try:
+            from authentication.authentication import get_firebase_user_data
+            firebase_user_data = get_firebase_user_data(user_uid)
+            if firebase_user_data:
+                # Use Firebase data to fill missing fields
+                if not name or name == 'User':
+                    name = firebase_user_data.get('name') or firebase_user_data.get('displayName') or 'Bematore User'
+                if not phone_number:
+                    phone_number = firebase_user_data.get('phoneNumber') or firebase_user_data.get('phone_number') or ''
+        except Exception as e:
+            logger.warning(f"Could not fetch Firebase user data for {user_uid}: {e}")
+
         # Check if transaction already exists
         transaction, created = PaymentTransaction.objects.get_or_create(
             transaction_id=transaction_id,
@@ -95,6 +115,7 @@ class PaymentFormView(View):
                 'user_uid': user_uid,
                 'email': email,
                 'name': name,
+                'phone_number': phone_number,
                 'amount': storage_amount,  # Store in USD
                 'currency': currency_service.base_currency,  # Store as USD
                 'purpose': purpose,
@@ -103,10 +124,38 @@ class PaymentFormView(View):
                     'display_amount': display_amount,
                     'display_currency': display_currency,
                     'original_amount': float(amount),
-                    'original_currency': currency
+                    'original_currency': currency,
+                    'assessment_type': assessment_type,
+                    'assessment_score': assessment_score,
+                    'firebase_user_data': firebase_user_data
                 }
             }
         )
+        
+        # Automatically sync transaction to Firebase
+        if transaction:
+            try:
+                firebase_payment_data = {
+                    'transactionId': transaction.transaction_id,
+                    'userId': transaction.user_uid,
+                    'email': transaction.email,
+                    'name': transaction.name,
+                    'phoneNumber': transaction.phone_number,
+                    'paymentMethod': 'pending',  # Will be updated when user selects method
+                    'amount': float(transaction.amount),
+                    'currency': transaction.currency,
+                    'status': transaction.status,
+                    'purpose': transaction.purpose,
+                    'assessmentType': assessment_type,
+                    'assessmentScore': assessment_score,
+                    'initiatedAt': transaction.created_at.isoformat() if transaction.created_at else None
+                }
+                
+                record_payment_in_firebase(firebase_payment_data)
+                logger.info(f"Synced transaction {transaction_id} to Firebase")
+                
+            except Exception as e:
+                logger.error(f"Failed to sync transaction {transaction_id} to Firebase: {e}")
         
         # If transaction exists and is not pending, redirect to status
         if not created and transaction.status != 'pending':
@@ -583,30 +632,41 @@ class PaymentStatusAPIView(APIView):
     """
     API endpoint to check payment status
     """
-    permission_classes = [IsAuthenticated]
+    # Remove authentication requirement to allow Flutter app to check status with transaction_id
+    permission_classes = []
     
     def get(self, request, transaction_id):
         try:
-            # Get transaction
-            transaction = PaymentTransaction.objects.get(
-                transaction_id=transaction_id,
-                user_uid=request.user.uid
-            )
+            # Get transaction (don't require user_uid match to allow direct URL access)
+            transaction = PaymentTransaction.objects.get(transaction_id=transaction_id)
             
             # Check if payment is still pending and needs status update
             if transaction.is_pending:
                 self._update_payment_status(transaction)
+                # Refresh from database to get updated status
+                transaction.refresh_from_db()
             
-            return Response({
+            # Prepare response data
+            response_data = {
                 'transaction_id': transaction.transaction_id,
                 'status': transaction.status,
                 'amount': float(transaction.amount),
                 'currency': transaction.currency,
                 'payment_method': transaction.payment_method,
-                'created_at': transaction.created_at,
-                'completed_at': transaction.completed_at,
-                'failure_reason': transaction.failure_reason
-            })
+                'purpose': transaction.purpose,
+                'created_at': transaction.created_at.isoformat() if transaction.created_at else None,
+                'completed_at': transaction.completed_at.isoformat() if transaction.completed_at else None,
+                'failure_reason': transaction.failure_reason,
+                'user_uid': transaction.user_uid,
+                'email': transaction.email,
+                'name': transaction.name
+            }
+            
+            # Include metadata if available
+            if transaction.metadata:
+                response_data['metadata'] = transaction.metadata
+            
+            return Response(response_data)
             
         except PaymentTransaction.DoesNotExist:
             return Response({
@@ -658,9 +718,14 @@ class PaymentStatusAPIView(APIView):
     
     def _handle_successful_payment(self, transaction):
         """
-        Handle successful payment completion
+        Handle successful payment completion and sync to Firebase
         """
         try:
+            # Update transaction completion timestamp
+            if not transaction.completed_at:
+                transaction.completed_at = timezone.now()
+                transaction.save()
+            
             # Update user payment status in Firebase
             payment_data = {
                 'status': 'completed',
@@ -672,27 +737,147 @@ class PaymentStatusAPIView(APIView):
             
             update_user_payment_status(transaction.user_uid, payment_data)
             
-            # Update payment record in Firebase
+            # Update complete payment record in Firebase
             firebase_data = {
                 'transactionId': transaction.transaction_id,
                 'userId': transaction.user_uid,
                 'email': transaction.email,
                 'name': transaction.name,
+                'phoneNumber': transaction.phone_number,
                 'paymentMethod': transaction.payment_method,
                 'amount': float(transaction.amount),
                 'currency': transaction.currency,
                 'status': 'completed',
                 'purpose': transaction.purpose,
-                'phoneNumber': transaction.phone_number,
                 'mpesaReceipt': transaction.mpesa_receipt,
-                'flutterwaveReference': transaction.flutterwave_flw_ref
+                'flutterwaveReference': transaction.flutterwave_flw_ref,
+                'completedAt': transaction.completed_at.isoformat() if transaction.completed_at else None,
+                'createdAt': transaction.created_at.isoformat() if transaction.created_at else None,
             }
-            record_payment_in_firebase(firebase_data)
             
-            logger.info(f"Payment completed successfully: {transaction.transaction_id}")
+            # Include metadata if available
+            if transaction.metadata:
+                firebase_data.update(transaction.metadata)
+            
+            record_payment_in_firebase(firebase_data)
+            logger.info(f"Successfully synced completed payment {transaction.transaction_id} to Firebase")
             
         except Exception as e:
-            logger.error(f"Error handling successful payment: {e}")
+            logger.error(f"Error handling successful payment {transaction.transaction_id}: {e}")
+
+
+@csrf_exempt
+def simple_status_check(request, transaction_id):
+    """
+    Simple payment status check endpoint for Flutter app (no auth required)
+    """
+    try:
+        transaction = PaymentTransaction.objects.get(transaction_id=transaction_id)
+        
+        # Update status if pending
+        if transaction.is_pending:
+            # Quick status update logic
+            try:
+                if transaction.payment_method == 'mpesa' and transaction.mpesa_checkout_request_id:
+                    mpesa_service = MpesaService()
+                    result = mpesa_service.query_stk_status(transaction.mpesa_checkout_request_id)
+                    if result.get('success'):
+                        new_status = result.get('status', 'failed')
+                        if new_status != transaction.status:
+                            transaction.status = new_status
+                            if result.get('receipt'):
+                                transaction.mpesa_receipt = result['receipt']
+                            transaction.save()
+                            
+                            # Sync to Firebase if completed
+                            if new_status == 'completed':
+                                try:
+                                    firebase_data = {
+                                        'transactionId': transaction.transaction_id,
+                                        'userId': transaction.user_uid,
+                                        'email': transaction.email,
+                                        'status': 'completed',
+                                        'paymentMethod': transaction.payment_method,
+                                        'amount': float(transaction.amount),
+                                        'currency': transaction.currency,
+                                        'purpose': transaction.purpose,
+                                        'mpesaReceipt': transaction.mpesa_receipt,
+                                        'completedAt': timezone.now().isoformat()
+                                    }
+                                    record_payment_in_firebase(firebase_data)
+                                    update_user_payment_status(transaction.user_uid, {
+                                        'status': 'completed',
+                                        'transactionId': transaction.transaction_id
+                                    })
+                                except Exception as e:
+                                    logger.error(f"Firebase sync error: {e}")
+                
+                elif transaction.payment_method == 'flutterwave':
+                    flutterwave_service = FlutterwaveService()
+                    result = flutterwave_service.verify_payment(transaction.transaction_id)
+                    if result.get('success'):
+                        new_status = result.get('status', 'failed')
+                        if new_status != transaction.status:
+                            transaction.status = new_status
+                            if result.get('flw_ref'):
+                                transaction.flutterwave_flw_ref = result['flw_ref']
+                            transaction.save()
+                            
+                            # Sync to Firebase if completed
+                            if new_status == 'completed':
+                                try:
+                                    firebase_data = {
+                                        'transactionId': transaction.transaction_id,
+                                        'userId': transaction.user_uid,
+                                        'email': transaction.email,
+                                        'status': 'completed',
+                                        'paymentMethod': transaction.payment_method,
+                                        'amount': float(transaction.amount),
+                                        'currency': transaction.currency,
+                                        'purpose': transaction.purpose,
+                                        'flutterwaveReference': transaction.flutterwave_flw_ref,
+                                        'completedAt': timezone.now().isoformat()
+                                    }
+                                    record_payment_in_firebase(firebase_data)
+                                    update_user_payment_status(transaction.user_uid, {
+                                        'status': 'completed',
+                                        'transactionId': transaction.transaction_id
+                                    })
+                                except Exception as e:
+                                    logger.error(f"Firebase sync error: {e}")
+                                    
+            except Exception as e:
+                logger.error(f"Status update error: {e}")
+        
+        # Return status
+        return JsonResponse({
+            'success': True,
+            'transaction_id': transaction.transaction_id,
+            'status': transaction.status,
+            'amount': float(transaction.amount),
+            'currency': transaction.currency,
+            'payment_method': transaction.payment_method,
+            'purpose': transaction.purpose,
+            'user_uid': transaction.user_uid,
+            'email': transaction.email,
+            'name': transaction.name,
+            'created_at': transaction.created_at.isoformat() if transaction.created_at else None,
+            'completed_at': transaction.completed_at.isoformat() if transaction.completed_at else None,
+            'failure_reason': transaction.failure_reason
+        })
+        
+    except PaymentTransaction.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Transaction not found'
+        }, status=404)
+        
+    except Exception as e:
+        logger.error(f"Status check error: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': 'Internal server error'
+        }, status=500)
 
 
 class PaymentWebView(View):

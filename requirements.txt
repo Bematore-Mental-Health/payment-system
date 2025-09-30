@@ -17,7 +17,7 @@ requests>=2.31.0
 PyMySQL>=1.1.0
 
 # Payment Processing APIs
-# (M-Pesa and Flutterwave use HTTP requests)
+# M-Pesa and Flutterwave integrations
 
 # Environment & Configuration
 python-decouple>=3.8
@@ -29,14 +29,19 @@ python-dateutil>=2.8.0
 # Security
 pycryptodome>=3.18.0
 
-# Development
+# Static Files
+whitenoise>=6.5.0
+
+# Production Server
+gunicorn>=21.2.0
+
+# Development Tools (optional)
 django-debug-toolbar>=4.1.0
 pytest-django>=4.5.0
 black>=23.7.0
 
-# Production
-gunicorn>=21.2.0
-whitenoise>=6.5.0
-
-# API Documentation
+# API Documentation (optional)
 drf-yasg>=1.21.0
+
+# Template Tags Support
+django-humanize>=0.1.2

@@ -19,6 +19,9 @@ urlpatterns = [
     path('api/initiate/', views.PaymentInitiationView.as_view(), name='payment_initiate'),
     path('api/status/<str:transaction_id>/', views.PaymentStatusAPIView.as_view(), name='payment_status_api'),
     
+    # Simple status check endpoint (no auth required)
+    path('check-status/<str:transaction_id>/', views.simple_status_check, name='simple_status_check'),
+    
     # Payment callbacks (redirects from payment providers)
     path('callback/<str:provider>/<str:transaction_id>/', views.PaymentCallbackView.as_view(), name='payment_callback'),
 ]

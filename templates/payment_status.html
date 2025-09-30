@@ -377,6 +377,88 @@
 
 {% block extra_js %}
 <script>
+// Payment status checking function
+function checkPaymentStatus() {
+    const btn = document.getElementById('checkStatusBtn');
+    const originalText = btn.innerHTML;
+    
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span> Checking...';
+    
+    // Call the simple status check endpoint
+    fetch(`/payments/check-status/{{ transaction.transaction_id }}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (data.status !== '{{ transaction.status }}') {
+                    // Status changed, reload the page
+                    location.reload();
+                } else {
+                    // Status unchanged, show brief feedback
+                    btn.innerHTML = 'Status Checked';
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    }, 2000);
+                }
+            } else {
+                console.error('Status check failed:', data.error);
+                btn.innerHTML = 'Check Failed';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }, 2000);
+            }
+        })
+        .catch(error => {
+            console.error('Status check error:', error);
+            btn.innerHTML = 'Check Failed';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }, 2000);
+        });
+}
+
+// Return to app function
+function returnToApp() {
+    // Try to return to the Flutter app
+    if (window.flutter_inappwebview) {
+        // Flutter InAppWebView
+        window.flutter_inappwebview.callHandler('payment_completed', {
+            transactionId: '{{ transaction.transaction_id }}',
+            status: '{{ transaction.status }}',
+            amount: '{{ transaction.amount }}',
+            currency: '{{ transaction.currency }}'
+        });
+    } else if (window.ReactNativeWebView) {
+        // React Native WebView
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'payment_completed',
+            transactionId: '{{ transaction.transaction_id }}',
+            status: '{{ transaction.status }}'
+        }));
+    } else if (window.Android) {
+        // Android WebView
+        window.Android.paymentCompleted('{{ transaction.transaction_id }}', '{{ transaction.status }}');
+    } else if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.paymentCompleted) {
+        // iOS WKWebView
+        window.webkit.messageHandlers.paymentCompleted.postMessage({
+            transactionId: '{{ transaction.transaction_id }}',
+            status: '{{ transaction.status }}'
+        });
+    } else {
+        // Fallback - try custom URL scheme
+        window.location.href = 'bematore://payment/completed?transaction_id={{ transaction.transaction_id }}&status={{ transaction.status }}';
+        
+        // If custom URL scheme fails, show message
+        setTimeout(() => {
+            alert('Please return to the Bematore app to continue.');
+        }, 1000);
+    }
+}
+
 // Auto-refresh for pending payments
 {% if transaction.status == 'pending' %}
     let refreshCount = 0;
@@ -390,28 +472,17 @@
         }
         
         if (!document.hidden) {
-            // Only refresh if page is visible
-            fetch(window.location.href, {
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(response => {
-                if (response.ok) {
-                    return response.text();
-                }
-            })
-            .then(html => {
-                // Check if status has changed by looking for specific elements
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const newStatus = doc.querySelector('.status-indicator');
-                
-                if (newStatus && !newStatus.classList.contains('status-pending')) {
-                    location.reload();
-                }
-            })
-            .catch(error => {
-                console.log('Auto-refresh error:', error);
-            });
+            // Use the simple status check endpoint for auto-refresh
+            fetch(`/payments/check-status/{{ transaction.transaction_id }}/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.status !== '{{ transaction.status }}') {
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.log('Auto-refresh error:', error);
+                });
         }
     }, 30000); // Check every 30 seconds
     

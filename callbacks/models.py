@@ -14,6 +14,7 @@ class CallbackLog(models.Model):
     provider = models.CharField(max_length=20, choices=PROVIDER_CHOICES)
     transaction_id = models.CharField(max_length=255)
     raw_data = models.JSONField()
+    success = models.BooleanField(default=False)
     processed = models.BooleanField(default=False)
     error_message = models.TextField(blank=True)
     created_at = models.DateTimeField(default=timezone.now)
