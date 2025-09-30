@@ -241,4 +241,4 @@ This project is proprietary software developed for Bematore Mental Health Platfo
 
 ---
 
-*Built with ❤️ by Brandon Ochieng for mental health accessibility*
+*Built with ❤️ for Bematore by [Brandon Ochieng](https://github.com/OchiengBrandon)*

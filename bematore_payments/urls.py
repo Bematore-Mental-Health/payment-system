@@ -8,6 +8,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from .views import HomeView, home_api
 
 @csrf_exempt
 def health_check(request):
@@ -19,6 +20,10 @@ def health_check(request):
     })
 
 urlpatterns = [
+    # Home page
+    path('', HomeView.as_view(), name='home'),
+    path('api/', home_api, name='home_api'),
+    
     # Admin
     path(f'{settings.ADMIN_URL}', admin.site.urls),
     

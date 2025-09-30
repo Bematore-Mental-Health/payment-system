@@ -1,0 +1,120 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <meta name="description" content="{{ description }}">
+    <meta name="author" content="{{ developer }}">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+        <div class="container">
+            <a class="navbar-brand logo-text" href="/">Bematore</a>
+            <div class="navbar-nav ms-auto">
+                <span class="status-badge">🟢 Operational</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <h1 class="display-4 fw-bold mb-4">Bematore Payment Gateway</h1>
+                    <p class="lead mb-4">Secure payment processing built specifically for Bematore Mental Health Suite</p>
+                    <p class="h5 mb-5">Supporting mental health professionals, hospitals, first responders & corporate wellness</p>
+                    
+                    <div class="row g-4 mt-5">
+                        <div class="col-md-4">
+                            <div class="card card-custom h-100 p-4">
+                                <div class="feature-icon">💳</div>
+                                <h5>Secure Payments</h5>
+                                <p class="small">PCI-compliant payment processing with multiple gateways</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card card-custom h-100 p-4">
+                                <div class="feature-icon">🏥</div>
+                                <h5>HIPAA Compliant</h5>
+                                <p class="small">Enterprise-grade security for mental health services</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card card-custom h-100 p-4">
+                                <div class="feature-icon">🌍</div>
+                                <h5>Multi-Platform</h5>
+                                <p class="small">Seamless integration with Bematore's mobile and web apps</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- API Information -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card card-custom p-4">
+                        <h3 class="mb-4">About Bematore</h3>
+                        <div class="row">
+                            <div class="col-md-12 text-center">
+                                <p class="lead">Bematore Mental Health Suite - AI-Driven, Culturally Aware, Clinically Grounded Mental Health Applications</p>
+                                <p class="mt-3">Built specifically for Bematore to support mental health services for hospitals, first responders, EMS, and corporate wellness programs. This secure payment gateway ensures seamless, HIPAA-compliant transactions.</p>
+                                <p class="small mt-4">
+                                    <strong>Developer:</strong> Brandon Ochieng 
+                                    <a href="https://github.com/OchiengBrandon" class="text-light ms-2" target="_blank" rel="noopener noreferrer">
+                                        🔗 GitHub
+                                    </a>
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 text-center">
+                            <a href="https://bematore.com" class="btn btn-bematore me-3">Visit Bematore</a>
+                            <a href="https://play.google.com/store/search?q=bematore" class="btn btn-outline-light me-2">Google Play</a>
+                            <a href="https://apps.apple.com/search?term=bematore" class="btn btn-outline-light">App Store</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Bematore Payment Gateway</h5>
+                    <p class="small">Secure payment processing built specifically for Bematore Mental Health Suite</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="small mb-0">Built with ❤️ for Bematore by <a href="https://github.com/OchiengBrandon" class="text-light footer-link" target="_blank" rel="noopener noreferrer">Brandon Ochieng</a></p>
+                    <p class="small text-muted">Bematore Mental Health Solutions © {% now "Y" %}</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+
+</body>
+</html>
