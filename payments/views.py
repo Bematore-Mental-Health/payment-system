@@ -8,6 +8,7 @@ redirects for the Bematore payment system.
 import json
 import logging
 import uuid
+from datetime import datetime
 from decimal import Decimal
 from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
@@ -30,6 +31,38 @@ from .services.currency_service import CurrencyService
 from authentication.authentication import record_payment_in_firebase, update_user_payment_status
 
 logger = logging.getLogger(__name__)
+
+
+def clean_firebase_data(data):
+    """
+    Clean Firebase data to make it JSON serializable by converting
+    DatetimeWithNanoseconds and other Firebase objects to standard Python types
+    """
+    if data is None:
+        return None
+    
+    if isinstance(data, dict):
+        cleaned = {}
+        for key, value in data.items():
+            cleaned[key] = clean_firebase_data(value)
+        return cleaned
+    elif isinstance(data, list):
+        return [clean_firebase_data(item) for item in data]
+    elif hasattr(data, 'timestamp'):
+        # Handle Firebase DatetimeWithNanoseconds
+        try:
+            return data.isoformat() if hasattr(data, 'isoformat') else str(data)
+        except:
+            return str(data)
+    elif isinstance(data, datetime):
+        return data.isoformat()
+    else:
+        # For any other non-serializable objects, convert to string
+        try:
+            json.dumps(data)  # Test if it's JSON serializable
+            return data
+        except (TypeError, ValueError):
+            return str(data)
 
 
 class PaymentFormView(View):
@@ -127,7 +160,7 @@ class PaymentFormView(View):
                     'original_currency': currency,
                     'assessment_type': assessment_type,
                     'assessment_score': assessment_score,
-                    'firebase_user_data': firebase_user_data
+                    'firebase_user_data': clean_firebase_data(firebase_user_data)
                 }
             }
         )
