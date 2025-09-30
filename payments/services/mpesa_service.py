@@ -32,8 +32,10 @@ class MpesaService:
         Get OAuth access token from M-Pesa API
         """
         if self.access_token and self.token_expiry and datetime.now() < self.token_expiry:
+            logger.info("M-PESA FLOW: Using cached access token")
             return self.access_token
         
+        logger.info("M-PESA FLOW: Requesting new access token from M-Pesa API")
         auth_url = f"{self.base_url}/oauth/v1/generate?grant_type=client_credentials"
         
         # Create basic auth header
@@ -46,6 +48,7 @@ class MpesaService:
         }
         
         try:
+            logger.info(f"M-PESA FLOW: Making auth request to {auth_url}")
             response = requests.get(auth_url, headers=headers, timeout=30)
             response.raise_for_status()
             
@@ -54,14 +57,14 @@ class MpesaService:
             # Token expires in ~3600 seconds, refresh 100 seconds early
             self.token_expiry = datetime.now() + timedelta(seconds=3500)
             
-            logger.info("Successfully obtained M-Pesa access token")
+            logger.info("M-PESA FLOW: Successfully obtained M-Pesa access token")
             return self.access_token
             
         except requests.exceptions.RequestException as e:
-            logger.error(f"Failed to get M-Pesa access token: {e}")
+            logger.error(f"M-PESA FLOW: Failed to get M-Pesa access token: {e}")
             raise Exception(f"M-Pesa authentication failed: {e}")
         except KeyError as e:
-            logger.error(f"Invalid M-Pesa token response: {e}")
+            logger.error(f"M-PESA FLOW: Invalid M-Pesa token response: {e}")
             raise Exception("Invalid M-Pesa API response")
     
     def _generate_password(self) -> tuple:
@@ -95,16 +98,25 @@ class MpesaService:
         """
         Initiate STK Push payment request
         """
+        logger.info(f"M-PESA FLOW: ========== INITIATING STK PUSH ==========")
+        logger.info(f"M-PESA FLOW: Phone: {phone_number}, Amount: {amount} KES, Reference: {account_reference}")
+        logger.info(f"M-PESA FLOW: Transaction Description: {transaction_desc}")
+        
         try:
             access_token = self._get_access_token()
             password, timestamp = self._generate_password()
             formatted_phone = self._format_phone_number(phone_number)
             
+            logger.info(f"M-PESA FLOW: Formatted phone number: {formatted_phone}")
+            logger.info(f"M-PESA FLOW: Generated timestamp: {timestamp}")
+            
             # Validate amount
             if amount < 1:
+                logger.error(f"M-PESA FLOW: Invalid amount: {amount} KES (minimum is 1 KES)")
                 raise ValueError("Amount must be at least KES 1")
             
             stk_push_url = f"{self.base_url}/mpesa/stkpush/v1/processrequest"
+            logger.info(f"M-PESA FLOW: STK Push URL: {stk_push_url}")
             
             headers = {
                 'Authorization': f'Bearer {access_token}',
@@ -125,27 +137,42 @@ class MpesaService:
                 "TransactionDesc": transaction_desc
             }
             
-            logger.info(f"Initiating M-Pesa STK push for {formatted_phone}, amount: {amount}")
-            logger.info(f"STK Push payload: {payload}")
+            logger.info(f"M-PESA FLOW: STK Push Request Payload:")
+            logger.info(f"M-PESA FLOW: {json.dumps(payload, indent=2)}")
             
+            logger.info(f"M-PESA FLOW: Sending STK Push request to M-Pesa API...")
             response = requests.post(stk_push_url, json=payload, headers=headers, timeout=30)
-            logger.info(f"STK Push response status: {response.status_code}")
-            logger.info(f"STK Push response body: {response.text}")
+            
+            logger.info(f"M-PESA FLOW: STK Push Response Status: {response.status_code}")
+            logger.info(f"M-PESA FLOW: STK Push Raw Response: {response.text}")
             
             response_data = response.json()
+            logger.info(f"M-PESA FLOW: STK Push Parsed Response:")
+            logger.info(f"M-PESA FLOW: {json.dumps(response_data, indent=2)}")
             
             if response.status_code == 200 and response_data.get('ResponseCode') == '0':
-                logger.info(f"STK push initiated successfully: {response_data.get('CheckoutRequestID')}")
+                checkout_request_id = response_data.get('CheckoutRequestID')
+                merchant_request_id = response_data.get('MerchantRequestID')
+                
+                logger.info(f"M-PESA FLOW: STK Push SUCCESS!")
+                logger.info(f"M-PESA FLOW: CheckoutRequestID: {checkout_request_id}")
+                logger.info(f"M-PESA FLOW: MerchantRequestID: {merchant_request_id}")
+                logger.info(f"M-PESA FLOW: Customer Message: {response_data.get('CustomerMessage')}")
+                
                 return {
                     'success': True,
-                    'checkout_request_id': response_data.get('CheckoutRequestID'),
-                    'merchant_request_id': response_data.get('MerchantRequestID'),
+                    'checkout_request_id': checkout_request_id,
+                    'merchant_request_id': merchant_request_id,
                     'response_description': response_data.get('ResponseDescription'),
                     'customer_message': response_data.get('CustomerMessage')
                 }
             else:
                 error_code = response_data.get('ResponseCode')
                 error_desc = response_data.get('ResponseDescription', 'STK Push failed')
+                
+                logger.error(f"M-PESA FLOW: STK Push FAILED!")
+                logger.error(f"M-PESA FLOW: Error Code: {error_code}")
+                logger.error(f"M-PESA FLOW: Error Description: {error_desc}")
                 
                 # Map error codes to user-friendly messages
                 error_message = self._map_error_code(error_code, error_desc)
@@ -176,11 +203,15 @@ class MpesaService:
         """
         Query the status of an STK push transaction
         """
+        logger.info(f"M-PESA FLOW: ========== QUERYING STK STATUS ==========")
+        logger.info(f"M-PESA FLOW: CheckoutRequestID: {checkout_request_id}")
+        
         try:
             access_token = self._get_access_token()
             password, timestamp = self._generate_password()
             
             query_url = f"{self.base_url}/mpesa/stkpushquery/v1/query"
+            logger.info(f"M-PESA FLOW: Query URL: {query_url}")
             
             headers = {
                 'Authorization': f'Bearer {access_token}',
@@ -194,22 +225,45 @@ class MpesaService:
                 "CheckoutRequestID": checkout_request_id
             }
             
+            logger.info(f"M-PESA FLOW: Status Query Payload:")
+            logger.info(f"M-PESA FLOW: {json.dumps(payload, indent=2)}")
+            
+            logger.info(f"M-PESA FLOW: Sending status query request...")
             response = requests.post(query_url, json=payload, headers=headers, timeout=30)
+            
+            logger.info(f"M-PESA FLOW: Status Query Response Status: {response.status_code}")
+            logger.info(f"M-PESA FLOW: Status Query Raw Response: {response.text}")
+            
             response_data = response.json()
+            logger.info(f"M-PESA FLOW: Status Query Parsed Response:")
+            logger.info(f"M-PESA FLOW: {json.dumps(response_data, indent=2)}")
             
             if response.status_code == 200:
                 result_code = response_data.get('ResultCode')
                 result_desc = response_data.get('ResultDesc', '')
+                transaction_status = self._map_result_code(result_code)
                 
-                return {
+                logger.info(f"M-PESA FLOW: STATUS QUERY SUCCESS!")
+                logger.info(f"M-PESA FLOW: Result Code: {result_code}")
+                logger.info(f"M-PESA FLOW: Result Description: {result_desc}")
+                logger.info(f"M-PESA FLOW: Mapped Status: {transaction_status}")
+                
+                response_obj = {
                     'success': True,
                     'result_code': result_code,
                     'result_desc': result_desc,
-                    'status': self._map_result_code(result_code),
+                    'status': transaction_status,
                     'raw_response': response_data
                 }
+                
+                logger.info(f"M-PESA FLOW: Final Status Response:")
+                logger.info(f"M-PESA FLOW: {json.dumps(response_obj, indent=2)}")
+                
+                return response_obj
             else:
-                logger.error(f"STK query failed: {response_data}")
+                logger.error(f"M-PESA FLOW: STATUS QUERY FAILED!")
+                logger.error(f"M-PESA FLOW: Error Response: {response_data}")
+                
                 return {
                     'success': False,
                     'error_message': 'Failed to query payment status',
@@ -217,7 +271,7 @@ class MpesaService:
                 }
                 
         except Exception as e:
-            logger.error(f"M-Pesa STK query error: {e}")
+            logger.error(f"M-PESA FLOW: STATUS QUERY EXCEPTION: {e}")
             return {
                 'success': False,
                 'error_message': str(e)
@@ -262,22 +316,39 @@ class MpesaService:
         """
         Process M-Pesa callback data
         """
+        logger.info(f"M-PESA FLOW: ========== PROCESSING CALLBACK ==========")
+        logger.info(f"M-PESA FLOW: Raw Callback Data:")
+        logger.info(f"M-PESA FLOW: {json.dumps(callback_data, indent=2)}")
+        
         try:
             stk_callback = callback_data.get('Body', {}).get('stkCallback', {})
+            logger.info(f"M-PESA FLOW: Extracted STK Callback:")
+            logger.info(f"M-PESA FLOW: {json.dumps(stk_callback, indent=2)}")
             
             merchant_request_id = stk_callback.get('MerchantRequestID')
             checkout_request_id = stk_callback.get('CheckoutRequestID')
             result_code = stk_callback.get('ResultCode')
             result_desc = stk_callback.get('ResultDesc')
             
+            logger.info(f"M-PESA FLOW: Callback Details:")
+            logger.info(f"M-PESA FLOW: - MerchantRequestID: {merchant_request_id}")
+            logger.info(f"M-PESA FLOW: - CheckoutRequestID: {checkout_request_id}")
+            logger.info(f"M-PESA FLOW: - ResultCode: {result_code}")
+            logger.info(f"M-PESA FLOW: - ResultDesc: {result_desc}")
+            
             callback_metadata = stk_callback.get('CallbackMetadata', {})
             metadata_items = callback_metadata.get('Item', [])
+            
+            logger.info(f"M-PESA FLOW: Callback Metadata Items:")
+            logger.info(f"M-PESA FLOW: {json.dumps(metadata_items, indent=2)}")
             
             # Extract payment details from metadata
             payment_details = {}
             for item in metadata_items:
                 name = item.get('Name')
                 value = item.get('Value')
+                logger.info(f"M-PESA FLOW: Processing metadata - {name}: {value}")
+                
                 if name == 'Amount':
                     payment_details['amount'] = value
                 elif name == 'MpesaReceiptNumber':
@@ -287,20 +358,34 @@ class MpesaService:
                 elif name == 'PhoneNumber':
                     payment_details['phone_number'] = value
             
-            return {
+            logger.info(f"M-PESA FLOW: Extracted Payment Details:")
+            logger.info(f"M-PESA FLOW: {json.dumps(payment_details, indent=2)}")
+            
+            # Determine transaction status
+            transaction_status = self._map_result_code(result_code)
+            logger.info(f"M-PESA FLOW: Mapped Transaction Status: {transaction_status}")
+            
+            # Build response
+            response = {
                 'success': True,
                 'merchant_request_id': merchant_request_id,
                 'checkout_request_id': checkout_request_id,
                 'result_code': result_code,
                 'result_desc': result_desc,
-                'status': self._map_result_code(result_code),
+                'status': transaction_status,
                 'payment_details': payment_details,
                 'raw_callback': callback_data
             }
             
+            logger.info(f"M-PESA FLOW: CALLBACK PROCESSING SUCCESSFUL!")
+            logger.info(f"M-PESA FLOW: Final Response:")
+            logger.info(f"M-PESA FLOW: {json.dumps(response, indent=2)}")
+            
+            return response
+            
         except Exception as e:
-            logger.error(f"Error processing M-Pesa callback: {e}")
-            return {
+            logger.error(f"M-PESA FLOW: CALLBACK PROCESSING FAILED: {e}")
+            error_response = {
                 'success': False,
                 'error_message': str(e),
                 'raw_callback': callback_data

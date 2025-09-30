@@ -48,12 +48,17 @@ class MpesaCallbackView(View):
             
             if result.get('success'):
                 checkout_request_id = result.get('checkout_request_id')
+                logger.info(f"M-PESA FLOW: ========== CALLBACK VIEW PROCESSING ==========")
+                logger.info(f"M-PESA FLOW: Callback processing successful, looking for transaction with CheckoutRequestID: {checkout_request_id}")
                 
                 # Find transaction by checkout request ID
                 try:
                     transaction = PaymentTransaction.objects.get(
                         mpesa_checkout_request_id=checkout_request_id
                     )
+                    
+                    logger.info(f"M-PESA FLOW: Found transaction: {transaction.transaction_id}")
+                    logger.info(f"M-PESA FLOW: Current transaction status: {transaction.status}")
                     
                     # Update callback record with transaction ID
                     callback_record.transaction_id = transaction.transaction_id
@@ -62,23 +67,32 @@ class MpesaCallbackView(View):
                     
                     # Update transaction status
                     old_status = transaction.status
-                    transaction.status = result.get('status', 'failed')
+                    new_status = result.get('status', 'failed')
+                    transaction.status = new_status
+                    
+                    logger.info(f"M-PESA FLOW: Status update: {old_status} → {new_status}")
                     
                     # Add M-Pesa specific data
                     payment_details = result.get('payment_details', {})
+                    logger.info(f"M-PESA FLOW: Payment details from callback:")
+                    logger.info(f"M-PESA FLOW: {json.dumps(payment_details, indent=2)}")
+                    
                     if payment_details.get('mpesa_receipt'):
                         transaction.mpesa_receipt = payment_details['mpesa_receipt']
+                        logger.info(f"M-PESA FLOW: Added M-Pesa receipt: {payment_details['mpesa_receipt']}")
                     
                     transaction.save()
+                    logger.info(f"M-PESA FLOW: Transaction saved with new status: {transaction.status}")
                     
                     # Handle successful payment
                     if transaction.status == 'completed' and old_status != 'completed':
+                        logger.info(f"M-PESA FLOW: Payment completed! Triggering success handlers...")
                         self._handle_successful_payment(transaction, payment_details)
                     
-                    logger.info(f"M-Pesa callback processed successfully: {transaction.transaction_id}")
+                    logger.info(f"M-PESA FLOW: M-Pesa callback processed successfully: {transaction.transaction_id}")
                     
                 except PaymentTransaction.DoesNotExist:
-                    logger.error(f"Transaction not found for checkout request: {checkout_request_id}")
+                    logger.error(f"M-PESA FLOW: Transaction not found for checkout request: {checkout_request_id}")
                     callback_record.success = False
                     callback_record.error_message = "Transaction not found"
                     callback_record.save()

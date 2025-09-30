@@ -127,21 +127,33 @@ class PaymentFormView(View):
         assessment_type = request.GET.get('assessment_type', '')
         assessment_score = request.GET.get('assessment_score', '')
         
+        logger.info(f"M-PESA FLOW: Initiating payment form for user {user_uid}")
+        logger.info(f"M-PESA FLOW: Transaction ID: {transaction_id}")
+        logger.info(f"M-PESA FLOW: Amount conversion - Original: {amount} {currency}, Storage: {storage_amount} USD, Display: {display_amount} {display_currency}")
+        logger.info(f"M-PESA FLOW: User data - Name: {name}, Email: {email}, Phone: {phone_number}")
+        
         # Fetch Firebase user data to enhance the transaction
         firebase_user_data = None
         try:
             from authentication.authentication import get_firebase_user_data
+            logger.info(f"M-PESA FLOW: Fetching Firebase data for user {user_uid}")
             firebase_user_data = get_firebase_user_data(user_uid)
             if firebase_user_data:
+                logger.info(f"M-PESA FLOW: Firebase data retrieved successfully")
                 # Use Firebase data to fill missing fields
                 if not name or name == 'User':
                     name = firebase_user_data.get('name') or firebase_user_data.get('displayName') or 'Bematore User'
+                    logger.info(f"M-PESA FLOW: Updated name from Firebase: {name}")
                 if not phone_number:
                     phone_number = firebase_user_data.get('phoneNumber') or firebase_user_data.get('phone_number') or ''
+                    logger.info(f"M-PESA FLOW: Updated phone from Firebase: {phone_number}")
+            else:
+                logger.warning(f"M-PESA FLOW: No Firebase data found for user {user_uid}")
         except Exception as e:
-            logger.warning(f"Could not fetch Firebase user data for {user_uid}: {e}")
+            logger.error(f"M-PESA FLOW: Firebase data fetch failed for {user_uid}: {e}")
 
         # Check if transaction already exists
+        logger.info(f"M-PESA FLOW: Creating/checking transaction {transaction_id}")
         transaction, created = PaymentTransaction.objects.get_or_create(
             transaction_id=transaction_id,
             defaults={
@@ -165,9 +177,15 @@ class PaymentFormView(View):
             }
         )
         
+        if created:
+            logger.info(f"M-PESA FLOW: New transaction created - ID: {transaction.transaction_id}, Status: {transaction.status}")
+        else:
+            logger.info(f"M-PESA FLOW: Existing transaction found - ID: {transaction.transaction_id}, Status: {transaction.status}")
+        
         # Automatically sync transaction to Firebase
         if transaction:
             try:
+                logger.info(f"M-PESA FLOW: Starting Firebase sync for transaction {transaction_id}")
                 firebase_payment_data = {
                     'transactionId': transaction.transaction_id,
                     'userId': transaction.user_uid,
@@ -185,7 +203,7 @@ class PaymentFormView(View):
                 }
                 
                 record_payment_in_firebase(firebase_payment_data)
-                logger.info(f"Synced transaction {transaction_id} to Firebase")
+                logger.info(f"M-PESA FLOW: Successfully synced transaction {transaction_id} to Firebase")
                 
             except Exception as e:
                 logger.error(f"Failed to sync transaction {transaction_id} to Firebase: {e}")
@@ -804,23 +822,41 @@ def simple_status_check(request, transaction_id):
     """
     Simple payment status check endpoint for Flutter app (no auth required)
     """
+    logger.info(f"M-PESA FLOW: ========== STATUS CHECK REQUEST ==========")
+    logger.info(f"M-PESA FLOW: Checking status for transaction: {transaction_id}")
+    logger.info(f"M-PESA FLOW: Request method: {request.method}")
+    logger.info(f"M-PESA FLOW: Request headers: {dict(request.headers)}")
+    
     try:
         transaction = PaymentTransaction.objects.get(transaction_id=transaction_id)
+        logger.info(f"M-PESA FLOW: Found transaction - Status: {transaction.status}, Method: {transaction.payment_method}")
+        logger.info(f"M-PESA FLOW: CheckoutRequestID: {transaction.mpesa_checkout_request_id}")
         
         # Update status if pending
         if transaction.is_pending:
+            logger.info(f"M-PESA FLOW: Transaction is pending, checking for updates...")
             # Quick status update logic
             try:
                 if transaction.payment_method == 'mpesa' and transaction.mpesa_checkout_request_id:
+                    logger.info(f"M-PESA FLOW: Querying M-Pesa status for CheckoutRequestID: {transaction.mpesa_checkout_request_id}")
                     mpesa_service = MpesaService()
                     result = mpesa_service.query_stk_status(transaction.mpesa_checkout_request_id)
+                    
+                    logger.info(f"M-PESA FLOW: M-Pesa query result:")
+                    logger.info(f"M-PESA FLOW: {json.dumps(result, indent=2)}")
+                    
                     if result.get('success'):
                         new_status = result.get('status', 'failed')
+                        logger.info(f"M-PESA FLOW: Status comparison - Current: {transaction.status}, New: {new_status}")
+                        
                         if new_status != transaction.status:
+                            logger.info(f"M-PESA FLOW: Status changed! Updating transaction...")
                             transaction.status = new_status
                             if result.get('receipt'):
                                 transaction.mpesa_receipt = result['receipt']
+                                logger.info(f"M-PESA FLOW: Added receipt: {result['receipt']}")
                             transaction.save()
+                            logger.info(f"M-PESA FLOW: Transaction updated with new status: {new_status}")
                             
                             # Sync to Firebase if completed
                             if new_status == 'completed':
@@ -882,8 +918,8 @@ def simple_status_check(request, transaction_id):
             except Exception as e:
                 logger.error(f"Status update error: {e}")
         
-        # Return status
-        return JsonResponse({
+        # Prepare final response
+        response_data = {
             'success': True,
             'transaction_id': transaction.transaction_id,
             'status': transaction.status,
@@ -897,20 +933,31 @@ def simple_status_check(request, transaction_id):
             'created_at': transaction.created_at.isoformat() if transaction.created_at else None,
             'completed_at': transaction.completed_at.isoformat() if transaction.completed_at else None,
             'failure_reason': transaction.failure_reason
-        })
+        }
+        
+        logger.info(f"M-PESA FLOW: STATUS CHECK SUCCESSFUL!")
+        logger.info(f"M-PESA FLOW: Final status response:")
+        logger.info(f"M-PESA FLOW: {json.dumps(response_data, indent=2)}")
+        
+        return JsonResponse(response_data)
         
     except PaymentTransaction.DoesNotExist:
-        return JsonResponse({
+        logger.error(f"M-PESA FLOW: Transaction not found: {transaction_id}")
+        error_response = {
             'success': False,
             'error': 'Transaction not found'
-        }, status=404)
+        }
+        logger.error(f"M-PESA FLOW: Error response: {json.dumps(error_response, indent=2)}")
+        return JsonResponse(error_response, status=404)
         
     except Exception as e:
-        logger.error(f"Status check error: {e}")
-        return JsonResponse({
+        logger.error(f"M-PESA FLOW: Status check error: {e}")
+        error_response = {
             'success': False,
             'error': 'Internal server error'
-        }, status=500)
+        }
+        logger.error(f"M-PESA FLOW: Error response: {json.dumps(error_response, indent=2)}")
+        return JsonResponse(error_response, status=500)
 
 
 class PaymentWebView(View):
