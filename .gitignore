@@ -139,7 +139,7 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 /media
-/static
+# /static - Allow static folder for cPanel deployment
 /staticfiles
 
 # Django migrations (exclude all migration files)

@@ -1,0 +1,9 @@
+<!-- Bematore Logo SVG -->
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="32" cy="32" r="30" fill="#4C85F3"/>
+  <circle cx="32" cy="28" r="12" fill="white"/>
+  <path d="M20 40C20 40 26 44 32 44C38 44 44 40 44 40" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="28" cy="26" r="2" fill="#4C85F3"/>
+  <circle cx="36" cy="26" r="2" fill="#4C85F3"/>
+  <path d="M28 30C28 30 30 32 32 32C34 32 36 30 36 30" stroke="#4C85F3" stroke-width="2" stroke-linecap="round"/>
+</svg>
