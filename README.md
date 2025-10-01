@@ -58,7 +58,7 @@ graph TB
         C[Third-party Integrations]
     end
     
-    subgraph "Bebature Payment System"
+    subgraph "Bematore Payment System"
         D[Django REST API]
         E[Authentication Service]
         F[Payment Processing Engine]
