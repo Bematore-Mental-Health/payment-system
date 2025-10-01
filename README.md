@@ -1,7 +1,9 @@
 # Bematore Payment System
 
 > **Professional Payment Processing Platform v1.0.0**  
-> Developed by **Brandon Ochieng** | Mental Health Technology Solutions
+# Bematore Payment System
+
+> Developed by **Brandon Ochieng** | Bematore Technologies
 
 [![Version](https://img.shields.io/badge/Version-1.0.0-success?style=for-the-badge)](https://github.com/OchiengBrandon/bematore-payment-system)
 [![Django](https://img.shields.io/badge/Django-4.2+-092E20?style=for-the-badge&logo=django&logoColor=white)](https://djangoproject.com/)
@@ -14,7 +16,7 @@
 
 ## 🌟 Executive Summary
 
-The **Bematore Payment System** is an enterprise-grade, HIPAA-compliant payment processing platform specifically engineered for mental health technology solutions. This professional system serves as an external payment gateway, ensuring seamless compliance with Apple App Store guidelines while delivering robust, scalable payment processing capabilities for healthcare applications.
+The **Bematore Payment System** is an enterprise-grade, HIPAA-compliant payment processing platform specifically engineered for Bematore Technologies. This professional system serves as an external payment gateway, ensuring seamless compliance with Apple App Store guidelines while delivering robust, scalable payment processing capabilities for healthcare applications.
 
 ### 🎯 Mission Statement
 *Empowering mental health professionals, hospitals, first responders, and corporate wellness programs with secure, reliable, and compliant payment processing solutions.*
@@ -481,7 +483,7 @@ We welcome contributions from the community! Please read our [Contributing Guide
 
 ## 📄 License
 
-This project is proprietary software developed by Brandon Ochieng for Mental Health Technology Solutions.
+This project is proprietary software developed by Brandon Ochieng for Bematore Technologies.
 
 **Copyright © 2025 Bematore Technologies**  
 All rights reserved.
@@ -690,14 +692,14 @@ This project follows professional development standards:
 
 **Developer**: Brandon Ochieng  
 **Email**: brandon@bematore.com  
-**Company**: Bematore Mental Health Solutions  
+**Company**: Bematore Technologies  
 **Website**: https://bematore.com  
 
 For technical support or feature requests, please contact the development team through official channels.
 
 ## 📄 License
 
-This project is proprietary software developed for Bematore Mental Health Platform. All rights reserved.
+This project is proprietary software developed for Bematore Technologies. All rights reserved.
 
 ---
 

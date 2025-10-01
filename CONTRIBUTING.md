@@ -1,7 +1,9 @@
 # Contributing to Bematore Payment System
 
 > Professional Payment Processing Platform  
-> Developed by Brandon Ochieng | Mental Health Technology Solutions
+# Bematore Payment System - Contributing Guidelines
+
+> Developed by Brandon Ochieng | Bematore Technologies
 
 Thank you for your interest in contributing to the Bematore Payment System! This document provides guidelines and information for contributors.
 
@@ -207,7 +209,7 @@ By contributing to this project, you agree that your contributions will be licen
 
 ---
 
-**Thank you for contributing to mental health technology solutions!** 💙
+**Thank you for contributing to Bematore Technologies!** 💙
 
 ---
 

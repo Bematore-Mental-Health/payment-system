@@ -8,7 +8,7 @@
 
 ## 🚀 Release Overview
 
-**Bematore Payment System v1.0.0 "Genesis"** marks the first enterprise-grade release of our professional payment processing platform specifically designed for mental health technology solutions. This release establishes a solid foundation for secure, scalable, and compliant payment processing.
+**Bematore Payment System v1.0.0 "Genesis"** marks the first enterprise-grade release of our professional payment processing platform specifically designed for Bematore Technologies. This release establishes a solid foundation for secure, scalable, and compliant payment processing.
 
 ---
 

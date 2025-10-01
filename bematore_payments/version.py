@@ -1,7 +1,7 @@
 """
 Bematore Payment System Version Management
 Professional Payment Processing Platform
-Developed by Brandon Ochieng | Mental Health Technology Solutions
+Developed by Brandon Ochieng | Bematore Technologies
 """
 
 __version__ = "1.0.0"
