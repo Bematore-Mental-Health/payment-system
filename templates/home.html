@@ -4,26 +4,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }}</title>
-    <meta name="description" content="{{ description }}">
-    <meta name="author" content="{{ developer }}">
+    <title>{{ title }} - Professional Payment Processing Platform</title>
+    <meta name="description" content="Professional Payment Processing Platform for Bematore Technologies">
+    <meta name="author" content="Brandon Ochieng">
+    <meta name="keywords" content="payment processing, mental health, enterprise, bematore, professional, m-pesa">
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
     
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+    <link rel="stylesheet" href="{% static 'css/enterprise.css' %}")
+
+    <!-- SEO and Social Meta Tags -->
+    <meta property="og:title" content="Bematore Payment System - Professional Payment Processing Platform">
+    <meta property="og:description" content="Enterprise-grade payment processing for Bematore Technologies">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://payments.bematore.com">
+    <meta name="twitter:card" content="summary_large_image">
 </head>
 <body>
+    <!-- Loading Indicator -->
+    <div class="loading-indicator"></div>
+
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+    <nav class="navbar navbar-enterprise">
         <div class="container">
-            <a class="navbar-brand logo-text" href="/">Bematore</a>
-            <div class="navbar-nav ms-auto">
-                <span class="status-badge">🟢 Operational</span>
+            <div class="d-flex justify-content-between align-items-center w-100">
+                <a class="navbar-brand" href="/">
+                    <i class="fas fa-shield-alt"></i>
+                    Bematore Payment System
+                </a>
+                <div class="d-flex align-items-center">
+                    <div class="status-indicator">
+                        <i class="fas fa-circle"></i>
+                        Operational
+                    </div>
+                    <span class="version-badge">v{{ version|default:"1.0.0" }}</span>
+                </div>
             </div>
         </div>
     </nav>
@@ -31,32 +55,185 @@
     <!-- Hero Section -->
     <section class="hero-section">
         <div class="container">
+            <div class="hero-content">
+                <div class="hero-icon">
+                    <i class="fas fa-credit-card"></i>
+                </div>
+                <h1 class="hero-title">
+                    Professional Payment Processing Platform
+                </h1>
+                <p class="hero-subtitle">
+                    Enterprise-grade payment gateway for Bematore Technologies
+                </p>
+                <p class="hero-description">
+                    Developed for <strong>Bematore Technologies</strong> | Secure, scalable, and compliant payment processing 
+                    specifically designed for mental health applications and healthcare professionals worldwide.
+                </p>
+                <div class="mt-4">
+                    <a href="https://bematore.com" class="btn-enterprise btn-primary-enterprise">
+                        <i class="fas fa-external-link-alt me-2"></i>Visit Bematore
+                    </a>
+                    <a href="mailto:brandoncohieng72@gmail.com?subject=Bematore Payment System Inquiry" class="btn-enterprise" title="Send email to developer">
+                        <i class="fas fa-envelope me-2"></i>Contact Developer
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold mb-3">Enterprise Features</h2>
+                <p class="lead text-muted">Built for scale, security, and reliability</p>
+            </div>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3 class="feature-title">Enterprise Security</h3>
+                    <p class="feature-description">
+                        Bank-grade encryption, PCI-DSS compliance, and HIPAA-ready infrastructure 
+                        ensuring maximum security for sensitive healthcare transactions.
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3 class="feature-title">M-Pesa Integration</h3>
+                    <p class="feature-description">
+                        Fully operational Daraja API integration with STK Push functionality, 
+                        comprehensive logging, and real-time transaction monitoring.
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-sync"></i>
+                    </div>
+                    <h3 class="feature-title">Firebase Sync</h3>
+                    <p class="feature-description">
+                        Real-time user authentication and data synchronization with Firebase, 
+                        ensuring seamless integration across all platforms.
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="feature-title">Advanced Monitoring</h3>
+                    <p class="feature-description">
+                        Comprehensive transaction logging, real-time monitoring, and detailed 
+                        analytics for complete payment flow visibility.
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <h3 class="feature-title">Multi-Currency Support</h3>
+                    <p class="feature-description">
+                        Support for KES, USD, and expanding currency options with automatic 
+                        conversion and localized payment methods.
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <h3 class="feature-title">24/7 Enterprise Support</h3>
+                    <p class="feature-description">
+                        Dedicated technical support for enterprise clients with comprehensive 
+                        documentation and developer resources.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3 col-6">
+                    <div class="stat-item">
+                        <div class="stat-number">99.9%</div>
+                        <div class="stat-label">Uptime</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-item">
+                        <div class="stat-number">< 2s</div>
+                        <div class="stat-label">Response Time</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-item">
+                        <div class="stat-number">100%</div>
+                        <div class="stat-label">PCI Compliant</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-item">
+                        <div class="stat-number">24/7</div>
+                        <div class="stat-label">Monitoring</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="about-section">
+        <div class="container">
             <div class="row justify-content-center">
-                <div class="col-lg-8">
-                    <h1 class="display-4 fw-bold mb-4">Bematore Payment Gateway</h1>
-                    <p class="lead mb-4">Secure payment processing built specifically for Bematore Mental Health Suite</p>
-                    <p class="h5 mb-5">Supporting mental health professionals, hospitals, first responders & corporate wellness</p>
+                <div class="col-lg-10">
+                    <div class="text-center mb-5">
+                        <h2 class="display-5 fw-bold mb-3">About the Platform</h2>
+                        <p class="lead text-muted">Professional Payment Processing Platform for Bematore Technologies</p>
+                    </div>
                     
-                    <div class="row g-4 mt-5">
-                        <div class="col-md-4">
-                            <div class="card card-custom h-100 p-4">
-                                <div class="feature-icon">💳</div>
-                                <h5>Secure Payments</h5>
-                                <p class="small">PCI-compliant payment processing with multiple gateways</p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="about-card">
+                                <h4 class="fw-bold mb-3">
+                                    <i class="fas fa-brain text-primary me-2"></i>
+                                    Mental Health Focus
+                                </h4>
+                                <p class="text-muted">
+                                    Specifically engineered for mental health applications, supporting healthcare professionals, 
+                                    hospitals, first responders, EMS teams, and corporate wellness programs with secure, 
+                                    HIPAA-compliant payment processing solutions.
+                                </p>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="card card-custom h-100 p-4">
-                                <div class="feature-icon">🏥</div>
-                                <h5>HIPAA Compliant</h5>
-                                <p class="small">Enterprise-grade security for mental health services</p>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card card-custom h-100 p-4">
-                                <div class="feature-icon">🌍</div>
-                                <h5>Multi-Platform</h5>
-                                <p class="small">Seamless integration with Bematore's mobile and web apps</p>
+                        <div class="col-md-6">
+                            <div class="about-card">
+                                <h4 class="fw-bold mb-3">
+                                    <i class="fas fa-code text-success me-2"></i>
+                                    Developer Excellence
+                                </h4>
+                                <p class="text-muted">
+                                    Developed by <strong>Brandon Ochieng</strong>, a specialized software engineer focused on 
+                                    healthcare technology solutions. Built with modern enterprise architecture and 
+                                    industry best practices.
+                                </p>
+                                <div class="mt-3">
+                                    <a href="https://github.com/OchiengBrandon" class="btn btn-outline-primary btn-sm me-2" target="_blank" rel="noopener noreferrer">
+                                        <i class="fab fa-github me-1"></i>GitHub
+                                    </a>
+                                    <a href="mailto:brandoncohieng72@gmail.com?subject=Bematore Payment System Contact" class="btn btn-outline-success btn-sm" title="Send email to developer">
+                                        <i class="fas fa-envelope me-1"></i>Contact
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -65,33 +242,23 @@
         </div>
     </section>
 
-    <!-- API Information -->
-    <section class="py-5">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-lg-8">
-                    <div class="card card-custom p-4">
-                        <h3 class="mb-4">About Bematore</h3>
-                        <div class="row">
-                            <div class="col-md-12 text-center">
-                                <p class="lead">Bematore Mental Health Suite - AI-Driven, Culturally Aware, Clinically Grounded Mental Health Applications</p>
-                                <p class="mt-3">Built specifically for Bematore to support mental health services for hospitals, first responders, EMS, and corporate wellness programs. This secure payment gateway ensures seamless, HIPAA-compliant transactions.</p>
-                                <p class="small mt-4">
-                                    <strong>Developer:</strong> Brandon Ochieng 
-                                    <a href="https://github.com/OchiengBrandon" class="text-light ms-2" target="_blank" rel="noopener noreferrer">
-                                        🔗 GitHub
-                                    </a>
-                                </p>
-                            </div>
-                        </div>
-                        
-                        <div class="mt-4 text-center">
-                            <a href="https://bematore.com" class="btn btn-bematore me-3">Visit Bematore</a>
-                            <a href="https://play.google.com/store/search?q=bematore" class="btn btn-outline-light me-2">Google Play</a>
-                            <a href="https://apps.apple.com/search?term=bematore" class="btn btn-outline-light">App Store</a>
-                        </div>
-                    </div>
-                </div>
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container text-center">
+            <h2 class="display-5 fw-bold mb-4">Ready to Get Started?</h2>
+            <p class="lead mb-5">
+                Join healthcare professionals worldwide who trust Bematore for secure payment processing
+            </p>
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+                <a href="https://bematore.com" class="btn-enterprise btn-primary-enterprise">
+                    <i class="fas fa-globe me-2"></i>Visit Bematore Platform
+                </a>
+                <a href="https://play.google.com/store/search?q=bematore" class="btn-enterprise" target="_blank" rel="noopener noreferrer">
+                    <i class="fab fa-google-play me-2"></i>Google Play
+                </a>
+                <a href="https://apps.apple.com/search?term=bematore" class="btn-enterprise" target="_blank" rel="noopener noreferrer">
+                    <i class="fab fa-apple me-2"></i>App Store
+                </a>
             </div>
         </div>
     </section>
@@ -100,21 +267,73 @@
     <footer class="footer">
         <div class="container">
             <div class="row">
-                <div class="col-md-6">
-                    <h5>Bematore Payment Gateway</h5>
-                    <p class="small">Secure payment processing built specifically for Bematore Mental Health Suite</p>
+                <div class="col-lg-4 mb-4">
+                    <div class="footer-brand">Bematore Payment System</div>
+                    <p class="footer-description">
+                        Professional payment processing platform specifically designed for mental health technology solutions 
+                        and healthcare applications.
+                    </p>
+                    <div class="d-flex gap-3">
+                        <a href="https://github.com/OchiengBrandon" class="text-light" target="_blank" rel="noopener noreferrer" title="Visit GitHub Profile">
+                            <i class="fab fa-github fa-lg"></i>
+                        </a>
+                        <a href="mailto:brandoncohieng72@gmail.com?subject=Bematore Payment System Contact" class="text-light" title="Send email to developer">
+                            <i class="fas fa-envelope fa-lg"></i>
+                        </a>
+                        <a href="https://bematore.com" class="text-light" target="_blank" rel="noopener noreferrer" title="Visit Bematore Technologies">
+                            <i class="fas fa-external-link-alt fa-lg"></i>
+                        </a>
+                    </div>
                 </div>
-                <div class="col-md-6 text-md-end">
-                    <p class="small mb-0">Built with ❤️ for Bematore by <a href="https://github.com/OchiengBrandon" class="text-light footer-link" target="_blank" rel="noopener noreferrer">Brandon Ochieng</a></p>
-                    <p class="small text-muted">Bematore Mental Health Solutions © {% now "Y" %}</p>
+                <div class="col-lg-2 col-md-3 col-6 mb-4">
+                    <h6 class="text-white fw-bold mb-3">Platform</h6>
+                    <div class="footer-links">
+                        <a href="/health/">System Health</a>
+                        <a href="/api/">API Documentation</a>
+                        <a href="/bematore-admin/">Admin Portal</a>
+                    </div>
                 </div>
+                <div class="col-lg-2 col-md-3 col-6 mb-4">
+                    <h6 class="text-white fw-bold mb-3">Services</h6>
+                    <div class="footer-links">
+                        <a href="#">M-Pesa Integration</a>
+                        <a href="#">Firebase Sync</a>
+                        <a href="#">Payment Processing</a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-3 col-6 mb-4">
+                    <h6 class="text-white fw-bold mb-3">Support</h6>
+                    <div class="footer-links">
+                        <a href="mailto:brandoncohieng72@gmail.com?subject=Bematore Payment System - Technical Support" title="Send email for technical support">Technical Support</a>
+                        <a href="https://bematore.com">Documentation</a>
+                        <a href="#">Enterprise Support</a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-3 col-6 mb-4">
+                    <h6 class="text-white fw-bold mb-3">Company</h6>
+                    <div class="footer-links">
+                        <a href="https://bematore.com">Bematore Technologies</a>
+                        <a href="#">Privacy Policy</a>
+                        <a href="#">Terms of Service</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p class="mb-0">
+                    © {% now "Y" %} Bematore Technologies. Built with ❤️ by 
+                    <a href="https://github.com/OchiengBrandon" class="text-light" target="_blank" rel="noopener noreferrer">Brandon Ochieng</a>
+                </p>
+                <p class="small mt-2 opacity-75">
+                    Professional Payment Processing Platform for Mental Health Technology Solutions
+                </p>
             </div>
         </div>
     </footer>
 
     <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
-
+    <!-- Custom JavaScript -->
+    <script src="{% static 'js/enterprise.js' %}"></script>
 </body>
 </html>
