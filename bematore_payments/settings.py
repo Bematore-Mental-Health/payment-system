@@ -1,8 +1,11 @@
 """
-Django settings for Bematore Payment System.
+Bematore Payment System - Django Settings
+Professional Payment Processing Platform
+Developed by Brandon Ochieng | Bematore Technologies
 
-External payment processing system integrated with Firebase for authentication
-and data synchronization. Designed to comply with Apple App Store guidelines.
+Enterprise-grade configuration for external payment processing system
+integrated with Firebase for authentication and data synchronization.
+Designed to comply with Apple App Store guidelines.
 """
 
 import os
@@ -12,22 +15,28 @@ import firebase_admin
 from firebase_admin import credentials
 import pymysql
 
+from .version import __version__, PLATFORM_NAME, DEVELOPER, ORGANIZATION
+
 # Configure PyMySQL as MySQL client
 pymysql.install_as_MySQLdb()
-
 
 # Load environment variables
 load_dotenv()
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
+# Platform Information
+PLATFORM_INFO = {
+    'name': PLATFORM_NAME,
+    'version': __version__,
+    'developer': DEVELOPER,
+    'organization': ORGANIZATION,
+}
+
+# Security Configuration
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-change-this-in-production')
-
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
-
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,payments.bematore.com').split(',')
 
 # Application definition

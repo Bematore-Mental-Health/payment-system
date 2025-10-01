@@ -1,13 +1,19 @@
 """
-Payment Models
+Bematore Payment System - Payment Models
+Professional Payment Processing Platform
+Developed by Brandon Ochieng | Bematore Technologies
 
-Django models for caching payment data locally while Firebase
-serves as the primary data store.
+Enterprise-grade payment transaction models with Firebase integration.
+Designed for scalable payment processing and data synchronization.
 """
 
 from django.db import models
 from django.utils import timezone
+from django.core.validators import MinValueValidator, MaxValueValidator
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class PaymentTransaction(models.Model):

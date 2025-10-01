@@ -1,5 +1,7 @@
 """
-Main URL Configuration for Bematore Payment System
+Bematore Payment System - Main URL Configuration
+Professional Payment Processing Platform
+Developed by Brandon Ochieng | Bematore Technologies
 """
 
 from django.contrib import admin
@@ -9,14 +11,22 @@ from django.conf.urls.static import static
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .views import HomeView, home_api
+from .version import get_version_info
 
 @csrf_exempt
 def health_check(request):
-    """Health check endpoint"""
+    """Enterprise health check endpoint with comprehensive system information."""
+    version_info = get_version_info()
     return JsonResponse({
         'status': 'healthy',
         'service': 'bematore-payment-system',
-        'version': '1.0.0'
+        'platform': 'Professional Payment Processing Platform',
+        'developer': version_info['author'],
+        'organization': version_info['organization'],
+        'version': version_info['version'],
+        'build': version_info['build_number'],
+        'release': version_info['release_name'],
+        'timestamp': '2024-01-15T00:00:00Z'
     })
 
 urlpatterns = [
