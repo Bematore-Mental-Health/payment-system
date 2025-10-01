@@ -13,6 +13,12 @@ from django.views.decorators.csrf import csrf_exempt
 from .views import HomeView, home_api
 from .version import get_version_info
 
+# Custom error handlers
+handler404 = 'bematore_payments.error_views.handler404'
+handler500 = 'bematore_payments.error_views.handler500'
+handler403 = 'bematore_payments.error_views.handler403'
+handler400 = 'bematore_payments.error_views.handler400'
+
 @csrf_exempt
 def health_check(request):
     """Enterprise health check endpoint with comprehensive system information."""
