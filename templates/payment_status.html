@@ -1,3 +1,6 @@
+# Updated Django Payment Status Template
+# This template works with the Flutter payment tracking system
+
 {% extends 'base.html' %}
 {% load static %}
 
@@ -102,6 +105,7 @@
                             <li>Enter your M-Pesa PIN to authorize the payment</li>
                             <li>Wait for the SMS confirmation</li>
                             <li>Your payment will be processed automatically</li>
+                            <li>Return to the Bematore app to see your results</li>
                         </ol>
                     </div>
                 </div>
@@ -126,26 +130,19 @@
         {% elif transaction.payment_method == 'flutterwave' %}
             <div class="alert alert-info">
                 <div class="alert-content">
-                    <div class="alert-title">Redirecting to Payment Gateway</div>
-                    <p>You will be redirected to complete your payment securely with our payment partner.</p>
+                    <div class="alert-title">Processing Card Payment</div>
+                    <p>Please complete your payment securely with our payment partner.</p>
+                    <p>After completing payment, return to the Bematore app to see your results.</p>
                 </div>
             </div>
             
             <div class="pulse-container">
                 <div class="pulse-ring">
                     <svg class="pulse-icon" viewBox="0 0 24 24">
-                        <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12H16A4,4 0 0,0 12,8V6Z"/>
+                        <path d="M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.11,4 20,4M20,18H4V8H20V18Z"/>
                     </svg>
                 </div>
             </div>
-            
-            {% if flutterwave_link %}
-            <script>
-                setTimeout(() => {
-                    window.location.href = "{{ flutterwave_link }}";
-                }, 3000);
-            </script>
-            {% endif %}
         {% endif %}
         
     {% elif transaction.status == 'completed' %}
@@ -166,6 +163,10 @@
                         <strong>Transaction Reference:</strong> {{ transaction.flutterwave_flw_ref }}
                     </div>
                 {% endif %}
+                
+                <div class="completion-notice">
+                    <p><strong>Next Step:</strong> Return to the Bematore app to view your assessment results.</p>
+                </div>
             </div>
         </div>
         
@@ -176,7 +177,7 @@
             </svg>
         </div>
         
-        <button class="btn btn-success" onclick="returnToApp()">
+        <button class="btn btn-success" onclick="returnToBematore()">
             <svg viewBox="0 0 24 24" width="16" height="16">
                 <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/>
             </svg>
@@ -211,7 +212,7 @@
                 Try Again
             </a>
             
-            <button class="btn btn-secondary" onclick="returnToApp()">
+            <button class="btn btn-secondary" onclick="returnToBematore()">
                 <svg viewBox="0 0 24 24" width="16" height="16">
                     <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/>
                 </svg>
@@ -237,7 +238,7 @@
                 Try Again
             </a>
             
-            <button class="btn btn-secondary" onclick="returnToApp()">
+            <button class="btn btn-secondary" onclick="returnToBematore()">
                 <svg viewBox="0 0 24 24" width="16" height="16">
                     <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/>
                 </svg>
@@ -323,12 +324,17 @@
     gap: 8px;
 }
 
-.receipt-info, .error-reason, .error-help {
+.receipt-info, .error-reason, .error-help, .completion-notice {
     margin-top: 12px;
     padding: 12px;
     background: rgba(255, 255, 255, 0.5);
     border-radius: 6px;
     font-size: 13px;
+}
+
+.completion-notice {
+    background: rgba(76, 175, 80, 0.1);
+    border-left: 4px solid #4CAF50;
 }
 
 .support-info {
@@ -380,6 +386,8 @@
 // Payment status checking function
 function checkPaymentStatus() {
     const btn = document.getElementById('checkStatusBtn');
+    if (!btn) return;
+    
     const originalText = btn.innerHTML;
     
     // Show loading state
@@ -421,55 +429,87 @@ function checkPaymentStatus() {
         });
 }
 
-// Return to app function
-function returnToApp() {
-    // Try Flutter WebView JavaScript channel first
+// Return to Bematore app function
+function returnToBematore() {
+    console.log('Return to Bematore called');
+    
+    // Method 1: Try Flutter WebView JavaScript channel
     try {
-        if (window.paymentResult && window.paymentResult.postMessage) {
-            // Send completion message to Flutter
-            window.paymentResult.postMessage(JSON.stringify({
-                action: 'payment_completed',
+        if (window.flutterPaymentChannel && typeof window.flutterPaymentChannel.postMessage === 'function') {
+            window.flutterPaymentChannel.postMessage(JSON.stringify({
+                action: 'payment_status_checked',
                 status: '{{ transaction.status }}',
                 transactionId: '{{ transaction.transaction_id }}',
                 amount: '{{ transaction.amount }}',
-                currency: '{{ transaction.currency }}'
+                currency: '{{ transaction.currency }}',
+                success: {{ transaction.status == 'completed'|yesno:'true,false' }}
             }));
+            console.log('Sent message to Flutter via payment channel');
             return;
         }
     } catch (e) {
-        console.log('Flutter channel failed:', e);
+        console.log('Flutter payment channel failed:', e);
     }
-    
-    // Try posting message to parent window (WebView)
+
+    // Method 2: Try general Flutter WebView communication
+    try {
+        if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
+            window.flutter_inappwebview.callHandler('paymentStatusUpdate', {
+                status: '{{ transaction.status }}',
+                transactionId: '{{ transaction.transaction_id }}',
+                success: {{ transaction.status == 'completed'|yesno:'true,false' }}
+            });
+            console.log('Sent message to Flutter via callHandler');
+            return;
+        }
+    } catch (e) {
+        console.log('Flutter callHandler failed:', e);
+    }
+
+    // Method 3: Try posting message to parent window (WebView)
     try {
         if (window.parent && window.parent !== window) {
             window.parent.postMessage({
-                type: 'payment_completed',
+                type: 'payment_status_update',
                 status: '{{ transaction.status }}',
                 transactionId: '{{ transaction.transaction_id }}',
-                amount: '{{ transaction.amount }}',
-                currency: '{{ transaction.currency }}'
+                success: {{ transaction.status == 'completed'|yesno:'true,false' }}
             }, '*');
+            console.log('Sent message to parent window');
             return;
         }
     } catch (e) {
-        console.log('PostMessage failed:', e);
+        console.log('PostMessage to parent failed:', e);
     }
-    
-    // Instead of window.close(), show completion message
+
+    // Method 4: Try closing window or navigating back
     try {
-        if (history.length > 1) {
-            history.back();
+        if (window.history.length > 1) {
+            window.history.back();
+            console.log('Navigated back in history');
         } else {
-            // Show user message instead of trying to close
-            document.body.innerHTML = '<div style="text-align:center;padding:50px;font-family:Arial,sans-serif;"><h2>Payment Completed Successfully!</h2><p>Please return to the Bematore app to view your results.</p></div>';
+            // Show completion message
+            document.body.innerHTML = `
+                <div style="text-align:center;padding:50px;font-family:Arial,sans-serif;max-width:400px;margin:0 auto;">
+                    <div style="color:#4CAF50;font-size:48px;margin-bottom:20px;">✓</div>
+                    <h2 style="color:#333;margin-bottom:15px;">Please Return to Bematore</h2>
+                    <p style="color:#666;line-height:1.5;">
+                        {% if transaction.status == 'completed' %}
+                        Your payment was successful! Please return to the Bematore app to view your assessment results.
+                        {% else %}
+                        Please return to the Bematore app to continue.
+                        {% endif %}
+                    </p>
+                </div>
+            `;
+            console.log('Showed completion message');
         }
     } catch (e) {
-        console.log('Navigation failed:', e);
+        console.log('Navigation fallback failed:', e);
     }
 }
 
-// Auto-refresh for pending payments
+// Auto-refresh for pending payments with Flutter communication
 {% if transaction.status == 'pending' %}
     let refreshCount = 0;
     const maxRefreshes = 20; // Stop after 10 minutes
@@ -487,6 +527,23 @@ function returnToApp() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success && data.status !== '{{ transaction.status }}') {
+                        // Status changed - notify Flutter before reloading
+                        if (data.status === 'completed') {
+                            try {
+                                // Try to notify Flutter about completion
+                                if (window.flutterPaymentChannel && window.flutterPaymentChannel.postMessage) {
+                                    window.flutterPaymentChannel.postMessage(JSON.stringify({
+                                        action: 'payment_completed',
+                                        transactionId: '{{ transaction.transaction_id }}',
+                                        success: true
+                                    }));
+                                }
+                            } catch (e) {
+                                console.log('Flutter notification failed:', e);
+                            }
+                        }
+                        
+                        // Reload to show new status
                         location.reload();
                     }
                 })
@@ -494,7 +551,7 @@ function returnToApp() {
                     console.log('Auto-refresh error:', error);
                 });
         }
-    }, 30000); // Check every 30 seconds
+    }, 15000); // Check every 15 seconds for pending payments
     
     // Clear interval when page becomes hidden
     document.addEventListener('visibilitychange', () => {
@@ -503,5 +560,29 @@ function returnToApp() {
         }
     });
 {% endif %}
+
+// Listen for messages from Flutter
+window.addEventListener('message', function(event) {
+    console.log('Received message from Flutter:', event.data);
+    
+    if (event.data && event.data.type === 'check_payment_status') {
+        checkPaymentStatus();
+    }
+});
+
+// Notify Flutter that page is loaded
+window.addEventListener('load', function() {
+    try {
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+                type: 'payment_page_loaded',
+                status: '{{ transaction.status }}',
+                transactionId: '{{ transaction.transaction_id }}'
+            }, '*');
+        }
+    } catch (e) {
+        console.log('Load notification failed:', e);
+    }
+});
 </script>
 {% endblock %}

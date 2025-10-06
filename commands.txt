@@ -1,0 +1,12 @@
+# Make changes and commit
+git add .
+git commit -m "Your changes"
+
+# Push to organization repo
+git push origin main
+
+# Also push to your backup
+git push backup main
+
+
+git push origin main && git push backup main
