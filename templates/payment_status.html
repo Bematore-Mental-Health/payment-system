@@ -430,6 +430,13 @@ function checkPaymentStatus() {
 function returnToBematore() {
     console.log('Return to Bematore called');
     
+    // FIXED: Create is_completed variable for proper boolean logic
+    {% if transaction.status == 'completed' %}
+        var isCompleted = true;
+    {% else %}
+        var isCompleted = false;
+    {% endif %}
+    
     // Method 1: Try Flutter WebView JavaScript channel
     try {
         if (window.flutterPaymentChannel && typeof window.flutterPaymentChannel.postMessage === 'function') {
@@ -439,7 +446,7 @@ function returnToBematore() {
                 transactionId: '{{ transaction.transaction_id }}',
                 amount: '{{ transaction.amount }}',
                 currency: '{{ transaction.currency }}',
-                success: {{ transaction.status == 'completed'|yesno:'true,false' }}
+                success: isCompleted
             }));
             console.log('Sent message to Flutter via payment channel');
             return;
@@ -454,7 +461,7 @@ function returnToBematore() {
             window.flutter_inappwebview.callHandler('paymentStatusUpdate', {
                 status: '{{ transaction.status }}',
                 transactionId: '{{ transaction.transaction_id }}',
-                success: {{ transaction.status == 'completed'|yesno:'true,false' }}
+                success: isCompleted
             });
             console.log('Sent message to Flutter via callHandler');
             return;
@@ -470,7 +477,7 @@ function returnToBematore() {
                 type: 'payment_status_update',
                 status: '{{ transaction.status }}',
                 transactionId: '{{ transaction.transaction_id }}',
-                success: {{ transaction.status == 'completed'|yesno:'true,false' }}
+                success: isCompleted
             }, '*');
             console.log('Sent message to parent window');
             return;
